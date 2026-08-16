@@ -26,24 +26,33 @@ final class LocalEnvironment {
     private final Vector3 lastCenter = new Vector3(Float.MAX_VALUE, 0f, Float.MAX_VALUE);
 
     private final Model trunkModel;
+    private final Model paleTrunkModel;
     private final Model coniferCrownModel;
     private final Model broadleafCrownModel;
+    private final Model fruitModel;
     private final Model bushModel;
     private final Model rockModel;
+    private final Model tallRockModel;
     private final Model grassModel;
 
     LocalEnvironment() {
         ModelBuilder builder = new ModelBuilder();
         trunkModel = builder.createCylinder(1.7f, 9f, 1.7f, 7,
                 material(0.28f, 0.19f, 0.11f), ATTRIBUTES);
+        paleTrunkModel = builder.createCylinder(1.55f, 9f, 1.55f, 7,
+                material(0.56f, 0.52f, 0.43f), ATTRIBUTES);
         coniferCrownModel = builder.createCone(8.5f, 18f, 8.5f, 9,
                 material(0.10f, 0.27f, 0.13f), ATTRIBUTES);
         broadleafCrownModel = builder.createSphere(10f, 9f, 10f, 8, 6,
                 material(0.16f, 0.38f, 0.16f), ATTRIBUTES);
+        fruitModel = builder.createSphere(1.25f, 1.25f, 1.25f, 6, 4,
+                material(0.70f, 0.16f, 0.08f), ATTRIBUTES);
         bushModel = builder.createSphere(4.5f, 2.8f, 4.5f, 7, 5,
                 material(0.20f, 0.36f, 0.14f), ATTRIBUTES);
         rockModel = builder.createSphere(4f, 3f, 3.5f, 7, 5,
                 material(0.38f, 0.38f, 0.36f), ATTRIBUTES);
+        tallRockModel = builder.createSphere(3.2f, 5.2f, 3f, 7, 5,
+                material(0.34f, 0.35f, 0.34f), ATTRIBUTES);
         grassModel = builder.createCone(2.4f, 3.6f, 2.4f, 5,
                 material(0.30f, 0.46f, 0.17f), ATTRIBUTES);
     }
@@ -115,10 +124,13 @@ final class LocalEnvironment {
     void dispose() {
         cache.dispose();
         trunkModel.dispose();
+        paleTrunkModel.dispose();
         coniferCrownModel.dispose();
         broadleafCrownModel.dispose();
+        fruitModel.dispose();
         bushModel.dispose();
         rockModel.dispose();
+        tallRockModel.dispose();
         grassModel.dispose();
     }
 
@@ -130,15 +142,27 @@ final class LocalEnvironment {
         }
         float angle = WorldGenerator.random01(cellX, cellZ, 41) * 360f;
         float trunkHeight = 9f * scale;
-        add(trunkModel, x, y + trunkHeight * 0.5f, z, angle, scale, scale, scale);
-
         boolean conifer = y > 58f || random < 0.46f;
+        boolean fruitTree = !conifer && random > 0.84f && y < 52f && distance < 430f;
+        Model selectedTrunk = !conifer && random > 0.70f ? paleTrunkModel : trunkModel;
+        add(selectedTrunk, x, y + trunkHeight * 0.5f, z, angle, scale, scale, scale);
+
         if (conifer) {
             add(coniferCrownModel, x, y + trunkHeight + 6.2f * scale, z,
                     angle, scale, scale, scale);
+            add(coniferCrownModel, x, y + trunkHeight + 13f * scale, z,
+                    angle + 24f, scale * 0.66f, scale * 0.68f, scale * 0.66f);
         } else {
             add(broadleafCrownModel, x, y + trunkHeight + 2.2f * scale, z,
                     angle, scale, scale, scale);
+            add(broadleafCrownModel, x + 2.8f * scale, y + trunkHeight + 5f * scale,
+                    z - 1.8f * scale, angle + 31f, scale * 0.72f, scale * 0.72f, scale * 0.72f);
+            if (fruitTree) {
+                add(fruitModel, x - 2.5f * scale, y + trunkHeight + 2.8f * scale, z,
+                        angle, scale, scale, scale);
+                add(fruitModel, x + 2f * scale, y + trunkHeight + 1.6f * scale,
+                        z + 2.2f * scale, angle, scale, scale, scale);
+            }
         }
     }
 
@@ -151,7 +175,9 @@ final class LocalEnvironment {
 
     private void addRock(int cellX, int cellZ, float x, float y, float z) {
         float scale = 0.7f + WorldGenerator.random01(cellX, cellZ, 59) * 1.45f;
-        add(rockModel, x, y + 0.9f * scale, z,
+        boolean tall = WorldGenerator.random01(cellX, cellZ, 60) < 0.36f;
+        Model selectedRock = tall ? tallRockModel : rockModel;
+        add(selectedRock, x, y + (tall ? 1.55f : 0.9f) * scale, z,
                 WorldGenerator.random01(cellX, cellZ, 61) * 360f,
                 scale, scale * 0.72f, scale * 0.86f);
     }
@@ -161,6 +187,12 @@ final class LocalEnvironment {
         add(grassModel, x, y + 1.2f * scale, z,
                 WorldGenerator.random01(cellX, cellZ, 71) * 360f,
                 scale, scale, scale);
+        add(grassModel, x + 1.1f * scale, y + scale, z - 0.7f * scale,
+                WorldGenerator.random01(cellX, cellZ, 73) * 360f,
+                scale * 0.72f, scale * 0.82f, scale * 0.72f);
+        add(grassModel, x - 0.9f * scale, y + 0.85f * scale, z + scale,
+                WorldGenerator.random01(cellX, cellZ, 79) * 360f,
+                scale * 0.62f, scale * 0.70f, scale * 0.62f);
     }
 
     private void add(Model model, float x, float y, float z, float angle,
