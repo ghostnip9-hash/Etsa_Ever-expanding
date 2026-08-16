@@ -88,7 +88,7 @@ public final class EtsaWorld extends ApplicationAdapter {
         modelBatch.render(localEnvironment.cache(), environment);
         modelBatch.end();
         worldMinimap.render(worldState.playerX(), worldState.playerZ());
-        coordinateOverlay.render(worldState.playerX(), worldState.playerZ());
+        coordinateOverlay.render(camera, worldState.playerX(), worldState.playerZ());
     }
 
     @Override
