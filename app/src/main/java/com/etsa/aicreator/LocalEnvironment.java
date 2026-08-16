@@ -84,7 +84,10 @@ final class LocalEnvironment {
                 }
 
                 float distance = (float) Math.sqrt(distanceSquared);
-                float height = WorldGenerator.height(x, z);
+                if (!EtsaWorld.containsTerrainPosition(x, z)) {
+                    continue;
+                }
+                float height = EtsaWorld.terrainSurfaceHeight(x, z);
                 float slope = WorldGenerator.slope(x, z);
                 if (height <= WorldGenerator.WATER_LEVEL + 1f || slope > 0.92f) {
                     continue;

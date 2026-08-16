@@ -37,6 +37,7 @@ public final class EtsaWorld extends ApplicationAdapter {
     private ModelInstance waterInstance;
     private LocalEnvironment localEnvironment;
     private WorldMinimap worldMinimap;
+    private WorldCoordinateOverlay coordinateOverlay;
     private PersistentWorldState worldState;
     private final Vector3 cameraFocus = new Vector3();
     private Environment environment;
@@ -57,6 +58,7 @@ public final class EtsaWorld extends ApplicationAdapter {
         waterInstance = new ModelInstance(waterModel);
         localEnvironment = new LocalEnvironment();
         worldMinimap = new WorldMinimap();
+        coordinateOverlay = new WorldCoordinateOverlay();
 
         environment = new Environment();
         environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.44f, 0.47f, 0.52f, 1f));
@@ -86,12 +88,14 @@ public final class EtsaWorld extends ApplicationAdapter {
         modelBatch.render(localEnvironment.cache(), environment);
         modelBatch.end();
         worldMinimap.render(worldState.playerX(), worldState.playerZ());
+        coordinateOverlay.render(worldState.playerX(), worldState.playerZ());
     }
 
     @Override
     public void resize(int width, int height) {
         cameraController.updateViewport(width, height);
         worldMinimap.resize(width, height);
+        coordinateOverlay.resize(width, height);
     }
 
     @Override
@@ -107,6 +111,7 @@ public final class EtsaWorld extends ApplicationAdapter {
         waterModel.dispose();
         localEnvironment.dispose();
         worldMinimap.dispose();
+        coordinateOverlay.dispose();
     }
 
     private Model createTerrainModel() {
@@ -242,6 +247,34 @@ public final class EtsaWorld extends ApplicationAdapter {
         modelBuilder.begin();
         modelBuilder.part("water", mesh, GL20.GL_TRIANGLES, waterMaterial);
         return modelBuilder.end();
+    }
+
+    static boolean containsTerrainPosition(float x, float z) {
+        float halfSize = TERRAIN_SIZE * 0.5f;
+        return x >= -halfSize && x <= halfSize && z >= -halfSize && z <= halfSize;
+    }
+
+    static float terrainSurfaceHeight(float x, float z) {
+        float spacing = TERRAIN_SIZE / GRID_CELLS;
+        float halfSize = TERRAIN_SIZE * 0.5f;
+        float gridX = MathUtils.clamp((x + halfSize) / spacing, 0f, GRID_CELLS);
+        float gridZ = MathUtils.clamp((z + halfSize) / spacing, 0f, GRID_CELLS);
+        int cellX = Math.min(GRID_CELLS - 1, MathUtils.floor(gridX));
+        int cellZ = Math.min(GRID_CELLS - 1, MathUtils.floor(gridZ));
+        float fractionX = gridX - cellX;
+        float fractionZ = gridZ - cellZ;
+        float x0 = cellX * spacing - halfSize;
+        float z0 = cellZ * spacing - halfSize;
+        float bottomLeft = WorldGenerator.height(x0, z0);
+        float bottomRight = WorldGenerator.height(x0 + spacing, z0);
+        float topLeft = WorldGenerator.height(x0, z0 + spacing);
+        float topRight = WorldGenerator.height(x0 + spacing, z0 + spacing);
+        if (fractionZ >= fractionX) {
+            return bottomLeft + fractionZ * (topLeft - bottomLeft)
+                    + fractionX * (topRight - topLeft);
+        }
+        return bottomLeft + fractionX * (bottomRight - bottomLeft)
+                + fractionZ * (topRight - bottomRight);
     }
 
     static float terrainHeight(float x, float z) {
