@@ -18,7 +18,7 @@ final class WorldGenerator {
         float region = fbm(x * 0.00082f - 31f, z * 0.00082f + 19f, 4, 0x53);
         float ridgeSource = fbm(x * 0.00175f + 41f, z * 0.00175f + 7f, 4, 0x71);
         float ridges = 1f - Math.abs(ridgeSource);
-        ridges = (float) Math.pow(MathUtils.clamp(ridges, 0f, 1f), 2.2f);
+        ridges = (float) Math.pow(MathUtils.clamp(ridges, 0f, 1f), 1.75f);
 
         float mountainMask = smoothstep(0.08f, 0.62f, region);
         float plainMask = smoothstep(0.30f, 0.72f,
@@ -26,8 +26,8 @@ final class WorldGenerator {
 
         float rollingGround = broad * 34f + lowlands * 19f;
         float localRelief = hills * MathUtils.lerp(22f, 6f, plainMask);
-        float mountains = mountainMask * (30f + ridges * 158f);
-        float cliffBands = mountainMask * (float) Math.pow(ridges, 6f) * 54f;
+        float mountains = mountainMask * (34f + ridges * 148f);
+        float cliffBands = mountainMask * (float) Math.pow(ridges, 4.8f) * 78f;
         return -13f + rollingGround + localRelief + mountains + cliffBands;
     }
 
@@ -78,11 +78,12 @@ final class WorldGenerator {
             r = 0.22f;
             g = 0.31f;
             b = 0.20f;
-        } else if (steepness > 0.32f || y > 118f) {
-            float rockLight = MathUtils.clamp((y - 55f) / 190f, 0f, 1f);
-            r = MathUtils.lerp(0.34f, 0.55f, rockLight);
-            g = MathUtils.lerp(0.33f, 0.53f, rockLight);
-            b = MathUtils.lerp(0.31f, 0.50f, rockLight);
+        } else if (steepness > 0.24f || y > 112f) {
+            float rockLight = MathUtils.clamp((y - 45f) / 205f, 0f, 1f);
+            float cliffShade = MathUtils.clamp((steepness - 0.20f) / 0.48f, 0f, 1f) * 0.07f;
+            r = MathUtils.lerp(0.32f, 0.56f, rockLight) - cliffShade;
+            g = MathUtils.lerp(0.31f, 0.54f, rockLight) - cliffShade;
+            b = MathUtils.lerp(0.29f, 0.51f, rockLight) - cliffShade;
         } else if (moisture < -0.25f) {
             r = 0.43f;
             g = 0.40f;
