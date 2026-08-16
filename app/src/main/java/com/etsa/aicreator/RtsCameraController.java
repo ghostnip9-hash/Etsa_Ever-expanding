@@ -11,7 +11,7 @@ final class RtsCameraController extends GestureDetector.GestureAdapter {
     private static final float PITCH_DEGREES = 36f;
     private static final float MIN_DISTANCE = 90f;
     private static final float MAX_DISTANCE = 1_800f;
-    private static final float PAN_LIMIT = 1_300f;
+    private static final float PAN_LIMIT = 2_850f;
     private static final float ROTATION_DEGREES_PER_PIXEL = 0.18f;
 
     private final PerspectiveCamera camera;
