@@ -82,6 +82,12 @@ final class RtsCameraController extends GestureDetector.GestureAdapter {
         result.set(target);
     }
 
+    void setTarget(float worldX, float worldZ) {
+        target.set(worldX, 0f, worldZ);
+        clampTarget();
+        updateCamera();
+    }
+
     void updateViewport(int width, int height) {
         camera.viewportWidth = Math.max(1, width);
         camera.viewportHeight = Math.max(1, height);

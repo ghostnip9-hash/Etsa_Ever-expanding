@@ -9,7 +9,6 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Matrix4;
-import com.badlogic.gdx.math.Vector3;
 
 /** Lightweight overview of the deterministic world; detailed geometry stays local. */
 final class WorldMinimap {
@@ -54,7 +53,7 @@ final class WorldMinimap {
         bottom = MARGIN;
     }
 
-    void render(Vector3 position) {
+    void render(float worldX, float worldZ) {
         Gdx.gl.glDisable(GL20.GL_DEPTH_TEST);
         Gdx.gl.glEnable(GL20.GL_BLEND);
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
@@ -72,8 +71,8 @@ final class WorldMinimap {
         float localSize = size * LOCAL_VIEW_SIZE / WORLD_SIZE;
         float localLeft = left + (size - localSize) * 0.5f;
         float localBottom = bottom + (size - localSize) * 0.5f;
-        float markerX = left + MathUtils.clamp(position.x / WORLD_SIZE + 0.5f, 0f, 1f) * size;
-        float markerY = bottom + MathUtils.clamp(position.z / WORLD_SIZE + 0.5f, 0f, 1f) * size;
+        float markerX = left + MathUtils.clamp(worldX / WORLD_SIZE + 0.5f, 0f, 1f) * size;
+        float markerY = bottom + MathUtils.clamp(worldZ / WORLD_SIZE + 0.5f, 0f, 1f) * size;
         shapes.begin(ShapeRenderer.ShapeType.Line);
         shapes.setColor(0.88f, 0.92f, 0.82f, 0.72f);
         shapes.rect(left, bottom, size, size);

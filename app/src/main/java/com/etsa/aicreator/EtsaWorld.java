@@ -37,6 +37,7 @@ public final class EtsaWorld extends ApplicationAdapter {
     private ModelInstance waterInstance;
     private LocalEnvironment localEnvironment;
     private WorldMinimap worldMinimap;
+    private PersistentWorldState worldState;
     private final Vector3 cameraFocus = new Vector3();
     private Environment environment;
     private float waterTime;
@@ -45,6 +46,8 @@ public final class EtsaWorld extends ApplicationAdapter {
     public void create() {
         camera = new PerspectiveCamera(55f, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         cameraController = new RtsCameraController(camera);
+        worldState = new PersistentWorldState();
+        cameraController.setTarget(worldState.playerX(), worldState.playerZ());
         Gdx.input.setInputProcessor(new GestureDetector(cameraController));
 
         modelBatch = new ModelBatch();
@@ -69,6 +72,8 @@ public final class EtsaWorld extends ApplicationAdapter {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
 
         cameraController.getTarget(cameraFocus);
+        worldState.updatePlayerPosition(cameraFocus.x, cameraFocus.z,
+                Math.min(Gdx.graphics.getDeltaTime(), 0.05f));
         localEnvironment.update(camera, cameraFocus);
         waterTime += Math.min(Gdx.graphics.getDeltaTime(), 0.05f);
         waterInstance.transform.setToTranslation(
@@ -80,7 +85,7 @@ public final class EtsaWorld extends ApplicationAdapter {
         modelBatch.render(waterInstance, environment);
         modelBatch.render(localEnvironment.cache(), environment);
         modelBatch.end();
-        worldMinimap.render(cameraFocus);
+        worldMinimap.render(worldState.playerX(), worldState.playerZ());
     }
 
     @Override
@@ -90,7 +95,13 @@ public final class EtsaWorld extends ApplicationAdapter {
     }
 
     @Override
+    public void pause() {
+        worldState.flush();
+    }
+
+    @Override
     public void dispose() {
+        worldState.flush();
         modelBatch.dispose();
         terrainModel.dispose();
         waterModel.dispose();
