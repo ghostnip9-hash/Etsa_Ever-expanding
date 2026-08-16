@@ -50,8 +50,8 @@ public final class EtsaWorld extends ApplicationAdapter {
         localEnvironment = new LocalEnvironment();
 
         environment = new Environment();
-        environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.52f, 0.56f, 0.62f, 1f));
-        environment.add(new DirectionalLight().set(1f, 0.94f, 0.82f, -0.55f, -1f, -0.35f));
+        environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.44f, 0.47f, 0.52f, 1f));
+        environment.add(new DirectionalLight().set(1f, 0.92f, 0.78f, -0.55f, -1f, -0.35f));
     }
 
     @Override
@@ -122,7 +122,7 @@ public final class EtsaWorld extends ApplicationAdapter {
                 vertices[vertexOffset++] = normal.x;
                 vertices[vertexOffset++] = normal.y;
                 vertices[vertexOffset++] = normal.z;
-                vertices[vertexOffset++] = WorldGenerator.terrainColor(x, y, z, normal.y);
+                vertices[vertexOffset++] = WorldGenerator.terrainColor(x, y, z, normal.x, normal.y, normal.z);
             }
         }
 
@@ -175,8 +175,8 @@ public final class EtsaWorld extends ApplicationAdapter {
         mesh.setIndices(indices);
 
         Material waterMaterial = new Material(
-                ColorAttribute.createDiffuse(new Color(0.12f, 0.38f, 0.49f, 1f)),
-                new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 0.74f));
+                ColorAttribute.createDiffuse(new Color(0.09f, 0.32f, 0.43f, 1f)),
+                new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 0.68f));
         ModelBuilder modelBuilder = new ModelBuilder();
         modelBuilder.begin();
         modelBuilder.part("water", mesh, GL20.GL_TRIANGLES, waterMaterial);

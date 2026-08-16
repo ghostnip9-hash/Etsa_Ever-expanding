@@ -74,7 +74,7 @@ final class WorldGenerator {
         result.set(left - right, sampleDistance * 2f, down - up).nor();
     }
 
-    static float terrainColor(float x, float y, float z, float normalY) {
+    static float terrainColor(float x, float y, float z, float normalX, float normalY, float normalZ) {
         float variation = fbm(x * 0.018f, z * 0.018f, 2, 0xE7);
         float moisture = moisture(x, z);
         float moistureAmount = MathUtils.clamp((moisture + 1f) * 0.5f, 0f, 1f);
@@ -82,10 +82,14 @@ final class WorldGenerator {
         float shoreWidth = 4f + (variation + 1f) * 2.4f;
         float shoreWeight = 1f - smoothstep(WATER_LEVEL + 0.8f,
                 WATER_LEVEL + shoreWidth, y);
+        shoreWeight *= smoothstep(WATER_LEVEL - 0.5f, WATER_LEVEL + 0.8f, y);
+        float underwaterWeight = 1f - smoothstep(WATER_LEVEL - 1f,
+                WATER_LEVEL + 0.5f, y);
+        float shallowFloor = smoothstep(WATER_LEVEL - 30f, WATER_LEVEL - 2f, y);
         float wetWeight = (1f - smoothstep(WATER_LEVEL + 2f, WATER_LEVEL + 16f, y))
                 * smoothstep(0.48f, 0.78f, moistureAmount);
-        float rockWeight = MathUtils.clamp(smoothstep(0.13f, 0.52f, steepness)
-                + smoothstep(72f, 215f, y) * 0.68f, 0f, 1f);
+        float rockWeight = MathUtils.clamp(smoothstep(0.09f, 0.44f, steepness)
+                + smoothstep(78f, 220f, y) * 0.62f, 0f, 1f);
 
         float grassMix = smoothstep(0.24f, 0.72f, moistureAmount);
         float r = MathUtils.lerp(0.43f, 0.19f, grassMix);
@@ -99,17 +103,26 @@ final class WorldGenerator {
         r = MathUtils.lerp(r, 0.38f, beachBlend);
         g = MathUtils.lerp(g, 0.36f, beachBlend);
         b = MathUtils.lerp(b, 0.24f, beachBlend);
-        float rockLight = MathUtils.clamp(0.32f + smoothstep(55f, 235f, y) * 0.46f
-                + variation * 0.12f - steepness * 0.08f, 0f, 1f);
+        float rockLight = MathUtils.clamp(0.29f + smoothstep(55f, 235f, y) * 0.48f
+                + variation * 0.17f - steepness * 0.14f, 0f, 1f);
         r = MathUtils.lerp(r, rockLight, rockWeight);
         g = MathUtils.lerp(g, rockLight * 0.96f, rockWeight);
         b = MathUtils.lerp(b, rockLight * 0.91f, rockWeight);
 
-        float surfaceVariation = variation * (0.035f + rockWeight * 0.025f);
+        float underwaterR = MathUtils.lerp(0.08f, 0.31f, shallowFloor);
+        float underwaterG = MathUtils.lerp(0.17f, 0.34f, shallowFloor);
+        float underwaterB = MathUtils.lerp(0.19f, 0.25f, shallowFloor);
+        r = MathUtils.lerp(r, underwaterR, underwaterWeight);
+        g = MathUtils.lerp(g, underwaterG, underwaterWeight);
+        b = MathUtils.lerp(b, underwaterB, underwaterWeight);
+
+        float surfaceVariation = variation * (0.045f + rockWeight * 0.040f);
+        float slopeLight = MathUtils.clamp(0.94f - normalX * 0.16f - normalZ * 0.10f
+                - steepness * 0.10f, 0.68f, 1.06f);
         return com.badlogic.gdx.graphics.Color.toFloatBits(
-                MathUtils.clamp(r + surfaceVariation, 0f, 1f),
-                MathUtils.clamp(g + surfaceVariation, 0f, 1f),
-                MathUtils.clamp(b + surfaceVariation * 0.65f, 0f, 1f),
+                MathUtils.clamp((r + surfaceVariation) * slopeLight, 0f, 1f),
+                MathUtils.clamp((g + surfaceVariation) * slopeLight, 0f, 1f),
+                MathUtils.clamp((b + surfaceVariation * 0.65f) * slopeLight, 0f, 1f),
                 1f);
     }
 
