@@ -39,6 +39,7 @@ public final class EtsaWorld extends ApplicationAdapter {
     private ModelInstance waterInstance;
     private ModelInstance neighborWaterInstance;
     private LocalEnvironment localEnvironment;
+    private LocalCreatures localCreatures;
     private WorldMinimap worldMinimap;
     private WorldCoordinateOverlay coordinateOverlay;
     private PersistentWorldState worldState;
@@ -69,6 +70,7 @@ public final class EtsaWorld extends ApplicationAdapter {
         waterInstance = new ModelInstance(waterModel);
         localEnvironment = new LocalEnvironment();
         localEnvironment.setTile(tileX, tileZ);
+        localCreatures = new LocalCreatures();
         worldMinimap = new WorldMinimap();
         coordinateOverlay = new WorldCoordinateOverlay();
 
@@ -90,6 +92,7 @@ public final class EtsaWorld extends ApplicationAdapter {
                 Math.min(Gdx.graphics.getDeltaTime(), 0.05f));
         updateTileResources(cameraFocus);
         localEnvironment.update(camera, cameraFocus);
+        localCreatures.update(camera, cameraFocus, tileX, tileZ);
         waterTime += Math.min(Gdx.graphics.getDeltaTime(), 0.05f);
         waterInstance.transform.setToTranslation(
                 WorldCoordinates.tileCenter(tileX) + MathUtils.sin(waterTime * 0.18f) * 6f,
@@ -114,6 +117,7 @@ public final class EtsaWorld extends ApplicationAdapter {
         }
         modelBatch.render(waterInstance, environment);
         modelBatch.render(localEnvironment.cache(), environment);
+        modelBatch.render(localCreatures.cache(), environment);
         modelBatch.end();
         worldMinimap.render(worldState.playerX(), worldState.playerZ());
         coordinateOverlay.render(camera, worldState.playerX(), worldState.playerZ());
@@ -141,6 +145,7 @@ public final class EtsaWorld extends ApplicationAdapter {
         }
         waterModel.dispose();
         localEnvironment.dispose();
+        localCreatures.dispose();
         worldMinimap.dispose();
         coordinateOverlay.dispose();
     }
