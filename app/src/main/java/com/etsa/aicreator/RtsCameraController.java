@@ -11,7 +11,7 @@ final class RtsCameraController extends GestureDetector.GestureAdapter {
     private static final float PITCH_DEGREES = 36f;
     private static final float MIN_DISTANCE = 90f;
     private static final float MAX_DISTANCE = 1_800f;
-    private static final float PAN_LIMIT = 720f;
+    private static final float PAN_LIMIT = 1_300f;
 
     private final PerspectiveCamera camera;
     private final Vector3 target = new Vector3(0f, EtsaWorld.terrainHeight(0f, 0f), 0f);
@@ -62,6 +62,10 @@ final class RtsCameraController extends GestureDetector.GestureAdapter {
     @Override
     public void pinchStop() {
         zooming = false;
+    }
+
+    void getTarget(Vector3 result) {
+        result.set(target);
     }
 
     void updateViewport(int width, int height) {

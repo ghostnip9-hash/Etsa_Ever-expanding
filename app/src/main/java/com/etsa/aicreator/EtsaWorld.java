@@ -12,27 +12,28 @@ import com.badlogic.gdx.graphics.g3d.Material;
 import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.ModelBatch;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
+import com.badlogic.gdx.graphics.g3d.attributes.BlendingAttribute;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.input.GestureDetector;
-import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 
-/** First rendering milestone: one lightweight, temporary terrain mesh. */
+/** Seeded local-region renderer for the natural-world milestone. */
 public final class EtsaWorld extends ApplicationAdapter {
-    private static final int GRID_CELLS = 128;
-    private static final float TERRAIN_SIZE = 1_600f;
+    private static final int GRID_CELLS = 192;
+    private static final float TERRAIN_SIZE = 6_000f;
     private static final int FLOATS_PER_VERTEX = 7;
-    private static final float LOW_TERRAIN_COLOR = new Color(0.47f, 0.58f, 0.36f, 1f).toFloatBits();
-    private static final float MID_TERRAIN_COLOR = new Color(0.38f, 0.48f, 0.31f, 1f).toFloatBits();
-    private static final float HIGH_TERRAIN_COLOR = new Color(0.53f, 0.56f, 0.54f, 1f).toFloatBits();
 
     private PerspectiveCamera camera;
     private RtsCameraController cameraController;
     private ModelBatch modelBatch;
     private Model terrainModel;
+    private Model waterModel;
     private ModelInstance terrainInstance;
+    private ModelInstance waterInstance;
+    private LocalEnvironment localEnvironment;
+    private final Vector3 cameraFocus = new Vector3();
     private Environment environment;
 
     @Override
@@ -44,6 +45,9 @@ public final class EtsaWorld extends ApplicationAdapter {
         modelBatch = new ModelBatch();
         terrainModel = createTerrainModel();
         terrainInstance = new ModelInstance(terrainModel);
+        waterModel = createWaterModel();
+        waterInstance = new ModelInstance(waterModel);
+        localEnvironment = new LocalEnvironment();
 
         environment = new Environment();
         environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.52f, 0.56f, 0.62f, 1f));
@@ -58,8 +62,13 @@ public final class EtsaWorld extends ApplicationAdapter {
         Gdx.gl.glClearColor(0.39f, 0.58f, 0.72f, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
 
+        cameraController.getTarget(cameraFocus);
+        localEnvironment.update(camera, cameraFocus);
+
         modelBatch.begin(camera);
         modelBatch.render(terrainInstance, environment);
+        modelBatch.render(waterInstance, environment);
+        modelBatch.render(localEnvironment.cache(), environment);
         modelBatch.end();
     }
 
@@ -72,6 +81,8 @@ public final class EtsaWorld extends ApplicationAdapter {
     public void dispose() {
         modelBatch.dispose();
         terrainModel.dispose();
+        waterModel.dispose();
+        localEnvironment.dispose();
     }
 
     private Model createTerrainModel() {
@@ -81,14 +92,29 @@ public final class EtsaWorld extends ApplicationAdapter {
         float spacing = TERRAIN_SIZE / GRID_CELLS;
         float halfSize = TERRAIN_SIZE * 0.5f;
         Vector3 normal = new Vector3();
+        int rowSize = GRID_CELLS + 1;
+        float[] heights = new float[vertexCount];
+
+        for (int zIndex = 0; zIndex <= GRID_CELLS; zIndex++) {
+            float z = zIndex * spacing - halfSize;
+            for (int xIndex = 0; xIndex <= GRID_CELLS; xIndex++) {
+                float x = xIndex * spacing - halfSize;
+                heights[zIndex * rowSize + xIndex] = WorldGenerator.height(x, z);
+            }
+        }
 
         int vertexOffset = 0;
         for (int zIndex = 0; zIndex <= GRID_CELLS; zIndex++) {
             float z = zIndex * spacing - halfSize;
             for (int xIndex = 0; xIndex <= GRID_CELLS; xIndex++) {
                 float x = xIndex * spacing - halfSize;
-                float y = terrainHeight(x, z);
-                calculateNormal(normal, x, z, spacing);
+                int vertexIndex = zIndex * rowSize + xIndex;
+                float y = heights[vertexIndex];
+                float left = heights[zIndex * rowSize + Math.max(0, xIndex - 1)];
+                float right = heights[zIndex * rowSize + Math.min(GRID_CELLS, xIndex + 1)];
+                float down = heights[Math.max(0, zIndex - 1) * rowSize + xIndex];
+                float up = heights[Math.min(GRID_CELLS, zIndex + 1) * rowSize + xIndex];
+                normal.set(left - right, spacing * 2f, down - up).nor();
 
                 vertices[vertexOffset++] = x;
                 vertices[vertexOffset++] = y;
@@ -96,12 +122,11 @@ public final class EtsaWorld extends ApplicationAdapter {
                 vertices[vertexOffset++] = normal.x;
                 vertices[vertexOffset++] = normal.y;
                 vertices[vertexOffset++] = normal.z;
-                vertices[vertexOffset++] = terrainColor(y);
+                vertices[vertexOffset++] = WorldGenerator.terrainColor(x, y, z, normal.y);
             }
         }
 
         int indexOffset = 0;
-        int rowSize = GRID_CELLS + 1;
         for (int z = 0; z < GRID_CELLS; z++) {
             for (int x = 0; x < GRID_CELLS; x++) {
                 short bottomLeft = (short) (z * rowSize + x);
@@ -132,29 +157,33 @@ public final class EtsaWorld extends ApplicationAdapter {
         return modelBuilder.end();
     }
 
-    private static void calculateNormal(Vector3 result, float x, float z, float spacing) {
-        float left = terrainHeight(x - spacing, z);
-        float right = terrainHeight(x + spacing, z);
-        float down = terrainHeight(x, z - spacing);
-        float up = terrainHeight(x, z + spacing);
-        result.set(left - right, spacing * 2f, down - up).nor();
-    }
 
-    private static float terrainColor(float height) {
-        if (height > 52f) {
-            return HIGH_TERRAIN_COLOR;
-        }
-        if (height > 24f) {
-            return MID_TERRAIN_COLOR;
-        }
-        return LOW_TERRAIN_COLOR;
+    private Model createWaterModel() {
+        float halfSize = TERRAIN_SIZE * 0.5f;
+        float waterHeight = WorldGenerator.WATER_LEVEL + 0.35f;
+        float[] vertices = {
+                -halfSize, waterHeight, -halfSize, 0f, 1f, 0f,
+                -halfSize, waterHeight, halfSize, 0f, 1f, 0f,
+                halfSize, waterHeight, halfSize, 0f, 1f, 0f,
+                halfSize, waterHeight, -halfSize, 0f, 1f, 0f
+        };
+        short[] indices = {0, 1, 2, 0, 2, 3};
+        Mesh mesh = new Mesh(true, 4, 6,
+                VertexAttribute.Position(),
+                VertexAttribute.Normal());
+        mesh.setVertices(vertices);
+        mesh.setIndices(indices);
+
+        Material waterMaterial = new Material(
+                ColorAttribute.createDiffuse(new Color(0.12f, 0.38f, 0.49f, 1f)),
+                new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 0.74f));
+        ModelBuilder modelBuilder = new ModelBuilder();
+        modelBuilder.begin();
+        modelBuilder.part("water", mesh, GL20.GL_TRIANGLES, waterMaterial);
+        return modelBuilder.end();
     }
 
     static float terrainHeight(float x, float z) {
-        float rolling = MathUtils.sin(x * 0.012f) * 13f + MathUtils.cos(z * 0.014f) * 11f;
-        float crossed = MathUtils.sin((x + z) * 0.006f) * 18f;
-        float ridge = Math.abs(MathUtils.sin(x * 0.0042f) * MathUtils.cos(z * 0.0051f)) * 54f;
-        float centralRise = 44f * (float) Math.exp(-(x * x + z * z) / 210_000f);
-        return rolling + crossed + ridge + centralRise;
+        return WorldGenerator.height(x, z);
     }
 }
