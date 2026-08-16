@@ -15,14 +15,17 @@ import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.attributes.BlendingAttribute;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
+import com.badlogic.gdx.graphics.g3d.attributes.FloatAttribute;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.input.GestureDetector;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.math.MathUtils;
 
 /** Seeded local-region renderer for the natural-world milestone. */
 public final class EtsaWorld extends ApplicationAdapter {
     private static final int GRID_CELLS = 192;
     private static final float TERRAIN_SIZE = 6_000f;
+    private static final int WATER_GRID_CELLS = 40;
     private static final int FLOATS_PER_VERTEX = 7;
 
     private PerspectiveCamera camera;
@@ -35,6 +38,7 @@ public final class EtsaWorld extends ApplicationAdapter {
     private LocalEnvironment localEnvironment;
     private final Vector3 cameraFocus = new Vector3();
     private Environment environment;
+    private float waterTime;
 
     @Override
     public void create() {
@@ -64,6 +68,10 @@ public final class EtsaWorld extends ApplicationAdapter {
 
         cameraController.getTarget(cameraFocus);
         localEnvironment.update(camera, cameraFocus);
+        waterTime += Math.min(Gdx.graphics.getDeltaTime(), 0.05f);
+        waterInstance.transform.setToTranslation(
+                MathUtils.sin(waterTime * 0.18f) * 6f,
+                MathUtils.sin(waterTime * 0.42f) * 0.12f, MathUtils.cos(waterTime * 0.16f) * 5f);
 
         modelBatch.begin(camera);
         modelBatch.render(terrainInstance, environment);
@@ -159,16 +167,51 @@ public final class EtsaWorld extends ApplicationAdapter {
 
 
     private Model createWaterModel() {
-        float halfSize = TERRAIN_SIZE * 0.5f;
+        float halfSize = TERRAIN_SIZE * 0.5f + 16f;
+        int rowSize = WATER_GRID_CELLS + 1;
+        int vertexCount = rowSize * rowSize;
+        float[] vertices = new float[vertexCount * 6];
+        short[] indices = new short[WATER_GRID_CELLS * WATER_GRID_CELLS * 6];
+        float spacing = halfSize * 2f / WATER_GRID_CELLS;
         float waterHeight = WorldGenerator.WATER_LEVEL + 0.35f;
-        float[] vertices = {
-                -halfSize, waterHeight, -halfSize, 0f, 1f, 0f,
-                -halfSize, waterHeight, halfSize, 0f, 1f, 0f,
-                halfSize, waterHeight, halfSize, 0f, 1f, 0f,
-                halfSize, waterHeight, -halfSize, 0f, 1f, 0f
-        };
-        short[] indices = {0, 1, 2, 0, 2, 3};
-        Mesh mesh = new Mesh(true, 4, 6,
+        Vector3 normal = new Vector3();
+        int vertexOffset = 0;
+        for (int zIndex = 0; zIndex <= WATER_GRID_CELLS; zIndex++) {
+            float z = zIndex * spacing - halfSize;
+            for (int xIndex = 0; xIndex <= WATER_GRID_CELLS; xIndex++) {
+                float x = xIndex * spacing - halfSize;
+                float waveX = x * 0.012f;
+                float waveZ = z * 0.009f;
+                float y = waterHeight + MathUtils.sin(waveX) * 0.55f
+                        + MathUtils.cos(waveZ) * 0.38f;
+                float slopeX = MathUtils.cos(waveX) * 0.0066f;
+                float slopeZ = -MathUtils.sin(waveZ) * 0.00342f;
+                normal.set(-slopeX, 1f, -slopeZ).nor();
+                vertices[vertexOffset++] = x;
+                vertices[vertexOffset++] = y;
+                vertices[vertexOffset++] = z;
+                vertices[vertexOffset++] = normal.x;
+                vertices[vertexOffset++] = normal.y;
+                vertices[vertexOffset++] = normal.z;
+            }
+        }
+
+        int indexOffset = 0;
+        for (int zIndex = 0; zIndex < WATER_GRID_CELLS; zIndex++) {
+            for (int xIndex = 0; xIndex < WATER_GRID_CELLS; xIndex++) {
+                short bottomLeft = (short) (zIndex * rowSize + xIndex);
+                short bottomRight = (short) (bottomLeft + 1);
+                short topLeft = (short) (bottomLeft + rowSize);
+                short topRight = (short) (topLeft + 1);
+                indices[indexOffset++] = bottomLeft;
+                indices[indexOffset++] = topLeft;
+                indices[indexOffset++] = topRight;
+                indices[indexOffset++] = bottomLeft;
+                indices[indexOffset++] = topRight;
+                indices[indexOffset++] = bottomRight;
+            }
+        }
+        Mesh mesh = new Mesh(true, vertexCount, indices.length,
                 VertexAttribute.Position(),
                 VertexAttribute.Normal());
         mesh.setVertices(vertices);
@@ -176,7 +219,9 @@ public final class EtsaWorld extends ApplicationAdapter {
 
         Material waterMaterial = new Material(
                 ColorAttribute.createDiffuse(new Color(0.09f, 0.32f, 0.43f, 1f)),
-                new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 0.68f));
+                ColorAttribute.createSpecular(new Color(0.62f, 0.76f, 0.82f, 1f)),
+                FloatAttribute.createShininess(30f),
+                new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, 0.66f));
         ModelBuilder modelBuilder = new ModelBuilder();
         modelBuilder.begin();
         modelBuilder.part("water", mesh, GL20.GL_TRIANGLES, waterMaterial);
