@@ -1,0 +1,186 @@
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+rootProject.name = "EtsaAIGameCreator"
+include(":app")
+EOFcat > build.gradle <<'EOF'
+plugins {
+    id 'com.android.application' version '8.7.3' apply false
+}
+EOFcat > app/build.gradle <<'EOF'
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.etsa.aicreator'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId "com.etsa.aicreator"
+        minSdk 26
+        targetSdk 35
+        versionCode 1
+        versionName "0.1"
+    }
+}
+
+dependencies {
+}
+EOFcat > app/src/main/AndroidManifest.xml <<'EOF'
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application
+        android:allowBackup="true"
+        android:label="Etsa AI Game Creator"
+        android:theme="@style/Theme.EtsaAI">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+        </activity>
+    </application>
+</manifest>
+EOFcat > app/src/main/res/values/styles.xml <<'EOF'
+<resources>
+    <style name="Theme.EtsaAI" parent="android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+    </style>
+</resources>
+EOFcat > app/src/main/res/layout/activity_main.xml <<'EOF'
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Etsa AI Game Creator"
+        android:textSize="26sp"
+        android:textStyle="bold" />
+
+    <EditText
+        android:id="@+id/promptInput"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Describe the game you want to create..."
+        android:minLines="5"
+        android:gravity="top"
+        android:inputType="textMultiLine" />
+
+    <Button
+        android:id="@+id/createButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Create Game Plan" />
+
+    <TextView
+        android:id="@+id/outputText"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:paddingTop="16dp"
+        android:text="Your generated project plan will appear here." />
+
+</LinearLayout>
+EOFcat > app/src/main/java/com/etsa/aicreator/MainActivity.java <<'EOF'
+package com.etsa.aicreator;
+
+import android.app.Activity;
+import android.os.Bundle;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
+
+public class MainActivity extends Activity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(com.etsa.aicreator.R.layout.activity_main);
+
+        EditText promptInput = findViewById(R.id.promptInput);
+        Button createButton = findViewById(R.id.createButton);
+        TextView outputText = findViewById(R.id.outputText);
+
+        createButton.setOnClickListener(v -> {
+            String prompt = promptInput.getText().toString().trim();
+
+            if (prompt.isEmpty()) {
+                outputText.setText("Describe a game first.");
+                return;
+            }
+
+            String result =
+                    "GAME CREATION PLAN\n\n" +
+                    "Prompt:\n" + prompt + "\n\n" +
+                    "Creator status:\n" +
+                    "• Android app running locally\n" +
+                    "• Internet capability enabled\n" +
+                    "• Project system ready\n" +
+                    "• AI coding connection will be added next\n" +
+                    "• Web research and image-reference search will be added next\n\n" +
+                    "This confirms the APK foundation is working.";
+
+            outputText.setText(result);
+        });
+    }
+}
+EOFcat > .github/workflows/build-apk.yml <<'EOF'
+name: Build Android APK
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.9
+
+      - name: Build APK
+        run: gradle assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: etsa-ai-game-creator-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+EOFgit status
+git status

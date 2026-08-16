@@ -1,0 +1,6 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:padding="16dp">
+<TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Etsa AI Game Creator" android:textSize="26sp" android:textStyle="bold" />
+<EditText android:id="@+id/promptInput" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Describe the game you want to create..." android:minLines="5" android:gravity="top" />
+<Button android:id="@+id/createButton" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Create" />
+<TextView android:id="@+id/outputText" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="AI creator ready." />
+</LinearLayout>
