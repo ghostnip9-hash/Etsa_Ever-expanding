@@ -16,19 +16,31 @@ final class WorldGenerator {
         float lowlands = fbm(x * 0.0011f + 23f, z * 0.0011f - 17f, 3, 0x29);
         float hills = fbm(x * 0.0031f, z * 0.0031f, 4, 0x37);
         float region = fbm(x * 0.00082f - 31f, z * 0.00082f + 19f, 4, 0x53);
-        float ridgeSource = fbm(x * 0.00175f + 41f, z * 0.00175f + 7f, 4, 0x71);
+        float warpedX = x + broad * 260f;
+        float warpedZ = z + lowlands * 220f;
+        float ridgeSource = fbm(warpedX * 0.00175f + 41f, warpedZ * 0.00175f + 7f, 4, 0x71);
         float ridges = 1f - Math.abs(ridgeSource);
         ridges = (float) Math.pow(MathUtils.clamp(ridges, 0f, 1f), 1.75f);
 
-        float mountainMask = smoothstep(0.08f, 0.62f, region);
+        float chainWave = MathUtils.sin(x * 0.00105f + z * 0.00042f + broad * 2.15f);
+        float chainRegion = smoothstep(-0.28f, 0.72f, chainWave + region * 0.65f);
+        float mountainMask = smoothstep(0.38f, 0.92f,
+                chainRegion * 0.68f + smoothstep(-0.02f, 0.58f, region) * 0.52f);
         float plainMask = smoothstep(0.30f, 0.72f,
                 fbm(x * 0.00135f + 73f, z * 0.00135f - 51f, 3, 0x97));
 
         float rollingGround = broad * 34f + lowlands * 19f;
         float localRelief = hills * MathUtils.lerp(22f, 6f, plainMask);
-        float mountains = mountainMask * (34f + ridges * 148f);
+        float peakVariation = MathUtils.lerp(0.78f, 1.18f, smoothstep(-0.55f, 0.65f, hills));
+        float mountains = mountainMask * (34f + ridges * 148f) * peakVariation;
         float cliffBands = mountainMask * (float) Math.pow(ridges, 4.8f) * 78f;
-        return -13f + rollingGround + localRelief + mountains + cliffBands;
+        float foothills = chainRegion * (1f - mountainMask) * (8f + Math.abs(hills) * 22f);
+        float drainage = (float) Math.pow(1f - Math.abs(lowlands), 5f)
+                * (1f - mountainMask) * 12f;
+        float escarpment = smoothstep(0.32f, 0.72f, broad)
+                * smoothstep(-0.04f, 0.10f, hills) * (1f - mountainMask * 0.55f) * 18f;
+        return -13f + rollingGround + localRelief + foothills - drainage
+                + mountains + cliffBands + escarpment;
     }
 
     static float moisture(float x, float z) {
@@ -63,41 +75,41 @@ final class WorldGenerator {
     }
 
     static float terrainColor(float x, float y, float z, float normalY) {
-        float variation = fbm(x * 0.018f, z * 0.018f, 2, 0xE7) * 0.055f;
+        float variation = fbm(x * 0.018f, z * 0.018f, 2, 0xE7);
         float moisture = moisture(x, z);
+        float moistureAmount = MathUtils.clamp((moisture + 1f) * 0.5f, 0f, 1f);
         float steepness = 1f - normalY;
+        float shoreWidth = 4f + (variation + 1f) * 2.4f;
+        float shoreWeight = 1f - smoothstep(WATER_LEVEL + 0.8f,
+                WATER_LEVEL + shoreWidth, y);
+        float wetWeight = (1f - smoothstep(WATER_LEVEL + 2f, WATER_LEVEL + 16f, y))
+                * smoothstep(0.48f, 0.78f, moistureAmount);
+        float rockWeight = MathUtils.clamp(smoothstep(0.13f, 0.52f, steepness)
+                + smoothstep(72f, 215f, y) * 0.68f, 0f, 1f);
 
-        float r;
-        float g;
-        float b;
-        if (y < WATER_LEVEL + 3.5f) {
-            r = 0.30f;
-            g = 0.34f;
-            b = 0.25f;
-        } else if (isSwamp(x, z, y)) {
-            r = 0.22f;
-            g = 0.31f;
-            b = 0.20f;
-        } else if (steepness > 0.24f || y > 112f) {
-            float rockLight = MathUtils.clamp((y - 45f) / 205f, 0f, 1f);
-            float cliffShade = MathUtils.clamp((steepness - 0.20f) / 0.48f, 0f, 1f) * 0.07f;
-            r = MathUtils.lerp(0.32f, 0.56f, rockLight) - cliffShade;
-            g = MathUtils.lerp(0.31f, 0.54f, rockLight) - cliffShade;
-            b = MathUtils.lerp(0.29f, 0.51f, rockLight) - cliffShade;
-        } else if (moisture < -0.25f) {
-            r = 0.43f;
-            g = 0.40f;
-            b = 0.25f;
-        } else {
-            r = MathUtils.lerp(0.30f, 0.19f, MathUtils.clamp(moisture + 0.3f, 0f, 1f));
-            g = MathUtils.lerp(0.43f, 0.38f, MathUtils.clamp(moisture + 0.3f, 0f, 1f));
-            b = MathUtils.lerp(0.20f, 0.16f, MathUtils.clamp(moisture + 0.3f, 0f, 1f));
-        }
+        float grassMix = smoothstep(0.24f, 0.72f, moistureAmount);
+        float r = MathUtils.lerp(0.43f, 0.19f, grassMix);
+        float g = MathUtils.lerp(0.39f, 0.40f, grassMix);
+        float b = MathUtils.lerp(0.24f, 0.16f, grassMix);
 
+        r = MathUtils.lerp(r, 0.20f, wetWeight);
+        g = MathUtils.lerp(g, 0.29f, wetWeight);
+        b = MathUtils.lerp(b, 0.18f, wetWeight);
+        float beachBlend = shoreWeight * 0.88f;
+        r = MathUtils.lerp(r, 0.38f, beachBlend);
+        g = MathUtils.lerp(g, 0.36f, beachBlend);
+        b = MathUtils.lerp(b, 0.24f, beachBlend);
+        float rockLight = MathUtils.clamp(0.32f + smoothstep(55f, 235f, y) * 0.46f
+                + variation * 0.12f - steepness * 0.08f, 0f, 1f);
+        r = MathUtils.lerp(r, rockLight, rockWeight);
+        g = MathUtils.lerp(g, rockLight * 0.96f, rockWeight);
+        b = MathUtils.lerp(b, rockLight * 0.91f, rockWeight);
+
+        float surfaceVariation = variation * (0.035f + rockWeight * 0.025f);
         return com.badlogic.gdx.graphics.Color.toFloatBits(
-                MathUtils.clamp(r + variation, 0f, 1f),
-                MathUtils.clamp(g + variation, 0f, 1f),
-                MathUtils.clamp(b + variation * 0.65f, 0f, 1f),
+                MathUtils.clamp(r + surfaceVariation, 0f, 1f),
+                MathUtils.clamp(g + surfaceVariation, 0f, 1f),
+                MathUtils.clamp(b + surfaceVariation * 0.65f, 0f, 1f),
                 1f);
     }
 
