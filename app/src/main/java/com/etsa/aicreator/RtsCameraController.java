@@ -12,6 +12,7 @@ final class RtsCameraController extends GestureDetector.GestureAdapter {
     private static final float MIN_DISTANCE = 90f;
     private static final float MAX_DISTANCE = 1_800f;
     private static final float PAN_LIMIT = 1_300f;
+    private static final float ROTATION_DEGREES_PER_PIXEL = 0.18f;
 
     private final PerspectiveCamera camera;
     private final Vector3 target = new Vector3(0f, EtsaWorld.terrainHeight(0f, 0f), 0f);
@@ -19,7 +20,10 @@ final class RtsCameraController extends GestureDetector.GestureAdapter {
     private final Vector3 groundForward = new Vector3();
     private float distance = 430f;
     private float zoomStartDistance;
+    private float yawDegrees = 45f;
+    private float rotationStartYaw;
     private boolean zooming;
+    private boolean rotating;
 
     RtsCameraController(PerspectiveCamera camera) {
         this.camera = camera;
@@ -56,12 +60,22 @@ final class RtsCameraController extends GestureDetector.GestureAdapter {
     @Override
     public boolean pinch(Vector2 initialPointer1, Vector2 initialPointer2,
                          Vector2 pointer1, Vector2 pointer2) {
-        return false;
+        if (!rotating) {
+            rotationStartYaw = yawDegrees;
+            rotating = true;
+        }
+        float initialMidpointX = (initialPointer1.x + initialPointer2.x) * 0.5f;
+        float currentMidpointX = (pointer1.x + pointer2.x) * 0.5f;
+        yawDegrees = (rotationStartYaw
+                + (currentMidpointX - initialMidpointX) * ROTATION_DEGREES_PER_PIXEL) % 360f;
+        updateCamera();
+        return true;
     }
 
     @Override
     public void pinchStop() {
         zooming = false;
+        rotating = false;
     }
 
     void getTarget(Vector3 result) {
@@ -85,9 +99,9 @@ final class RtsCameraController extends GestureDetector.GestureAdapter {
         float verticalDistance = MathUtils.sinDeg(PITCH_DEGREES) * distance;
         target.y = EtsaWorld.terrainHeight(target.x, target.z);
         camera.position.set(
-                target.x + horizontalDistance * 0.7071f,
+                target.x + horizontalDistance * MathUtils.cosDeg(yawDegrees),
                 target.y + Math.max(35f, verticalDistance),
-                target.z + horizontalDistance * 0.7071f);
+                target.z + horizontalDistance * MathUtils.sinDeg(yawDegrees));
         float minimumSafeHeight = EtsaWorld.terrainHeight(camera.position.x, camera.position.z) + 24f;
         camera.position.y = Math.max(camera.position.y, minimumSafeHeight);
         camera.lookAt(target);
