@@ -88,12 +88,13 @@ public final class EtsaWorld extends ApplicationAdapter {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
 
         cameraController.getTarget(cameraFocus);
-        worldState.updatePlayerPosition(cameraFocus.x, cameraFocus.z,
-                Math.min(Gdx.graphics.getDeltaTime(), 0.05f));
+        float deltaTime = Math.min(Gdx.graphics.getDeltaTime(), 0.05f);
+        worldState.updatePlayerPosition(cameraFocus.x, cameraFocus.z, deltaTime);
         updateTileResources(cameraFocus);
         localEnvironment.update(camera, cameraFocus);
-        localCreatures.update(camera, cameraFocus, tileX, tileZ);
-        waterTime += Math.min(Gdx.graphics.getDeltaTime(), 0.05f);
+        localCreatures.update(deltaTime, camera, cameraFocus, tileX, tileZ,
+                neighborTerrainInstance != null, neighborTileX, neighborTileZ);
+        waterTime += deltaTime;
         waterInstance.transform.setToTranslation(
                 WorldCoordinates.tileCenter(tileX) + MathUtils.sin(waterTime * 0.18f) * 6f,
                 MathUtils.sin(waterTime * 0.42f) * 0.12f,
@@ -117,7 +118,7 @@ public final class EtsaWorld extends ApplicationAdapter {
         }
         modelBatch.render(waterInstance, environment);
         modelBatch.render(localEnvironment.cache(), environment);
-        modelBatch.render(localCreatures.cache(), environment);
+        localCreatures.render(modelBatch, environment);
         modelBatch.end();
         worldMinimap.render(worldState.playerX(), worldState.playerZ());
         coordinateOverlay.render(camera, worldState.playerX(), worldState.playerZ());
