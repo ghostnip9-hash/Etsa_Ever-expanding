@@ -126,7 +126,10 @@ public final class EtsaWorld extends ApplicationAdapter {
         mesh.setIndices(indices);
 
         Material material = new Material(ColorAttribute.createDiffuse(Color.WHITE));
-        return new ModelBuilder().createFromMesh(mesh, GL20.GL_TRIANGLES, material);
+        ModelBuilder modelBuilder = new ModelBuilder();
+        modelBuilder.begin();
+        modelBuilder.part("terrain", mesh, GL20.GL_TRIANGLES, material);
+        return modelBuilder.end();
     }
 
     private static void calculateNormal(Vector3 result, float x, float z, float spacing) {
