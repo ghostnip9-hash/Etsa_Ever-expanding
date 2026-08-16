@@ -2,6 +2,10 @@ plugins {
     id 'com.android.application'
 }
 
+configurations {
+    natives
+}
+
 android {
     namespace 'com.etsa.aicreator'
     compileSdk 35
@@ -23,4 +27,46 @@ android {
 dependencies {
     implementation "com.badlogicgames.gdx:gdx:${gdxVersion}"
     implementation "com.badlogicgames.gdx:gdx-backend-android:${gdxVersion}"
+    natives "com.badlogicgames.gdx:gdx-platform:${gdxVersion}:natives-armeabi-v7a"
+    natives "com.badlogicgames.gdx:gdx-platform:${gdxVersion}:natives-arm64-v8a"
+    natives "com.badlogicgames.gdx:gdx-platform:${gdxVersion}:natives-x86"
+    natives "com.badlogicgames.gdx:gdx-platform:${gdxVersion}:natives-x86_64"
+}
+
+def libgdxNativeDirectory = layout.buildDirectory.dir("generated/libgdx-natives")
+
+android.sourceSets.main.jniLibs.srcDir(libgdxNativeDirectory)
+
+tasks.register("copyLibgdxNatives") {
+    inputs.files(configurations.natives)
+    outputs.dir(libgdxNativeDirectory)
+
+    doLast {
+        configurations.natives.files.each { nativeJar ->
+            String abi
+            if (nativeJar.name.contains("natives-armeabi-v7a")) {
+                abi = "armeabi-v7a"
+            } else if (nativeJar.name.contains("natives-arm64-v8a")) {
+                abi = "arm64-v8a"
+            } else if (nativeJar.name.contains("natives-x86_64")) {
+                abi = "x86_64"
+            } else if (nativeJar.name.contains("natives-x86")) {
+                abi = "x86"
+            } else {
+                throw new GradleException("Unknown libGDX native artifact: ${nativeJar.name}")
+            }
+
+            copy {
+                from zipTree(nativeJar)
+                into libgdxNativeDirectory.get().dir(abi)
+                include "*.so"
+            }
+        }
+    }
+}
+
+tasks.configureEach { task ->
+    if (task.name.matches("merge.*JniLibFolders")) {
+        task.dependsOn("copyLibgdxNatives")
+    }
 }
