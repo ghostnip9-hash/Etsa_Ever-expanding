@@ -36,6 +36,7 @@ public final class EtsaWorld extends ApplicationAdapter {
     private ModelInstance terrainInstance;
     private ModelInstance waterInstance;
     private LocalEnvironment localEnvironment;
+    private WorldMinimap worldMinimap;
     private final Vector3 cameraFocus = new Vector3();
     private Environment environment;
     private float waterTime;
@@ -52,6 +53,7 @@ public final class EtsaWorld extends ApplicationAdapter {
         waterModel = createWaterModel();
         waterInstance = new ModelInstance(waterModel);
         localEnvironment = new LocalEnvironment();
+        worldMinimap = new WorldMinimap();
 
         environment = new Environment();
         environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.44f, 0.47f, 0.52f, 1f));
@@ -78,11 +80,13 @@ public final class EtsaWorld extends ApplicationAdapter {
         modelBatch.render(waterInstance, environment);
         modelBatch.render(localEnvironment.cache(), environment);
         modelBatch.end();
+        worldMinimap.render(cameraFocus);
     }
 
     @Override
     public void resize(int width, int height) {
         cameraController.updateViewport(width, height);
+        worldMinimap.resize(width, height);
     }
 
     @Override
@@ -91,6 +95,7 @@ public final class EtsaWorld extends ApplicationAdapter {
         terrainModel.dispose();
         waterModel.dispose();
         localEnvironment.dispose();
+        worldMinimap.dispose();
     }
 
     private Model createTerrainModel() {
