@@ -24,7 +24,7 @@ import com.badlogic.gdx.math.MathUtils;
 /** Seeded local-region renderer for the natural-world milestone. */
 public final class EtsaWorld extends ApplicationAdapter {
     private static final int GRID_CELLS = 192;
-    private static final float TERRAIN_SIZE = 6_000f;
+    private static final float TERRAIN_SIZE = WorldCoordinates.TILE_SIZE;
     private static final int WATER_GRID_CELLS = 40;
     private static final int FLOATS_PER_VERTEX = 7;
 
@@ -32,9 +32,12 @@ public final class EtsaWorld extends ApplicationAdapter {
     private RtsCameraController cameraController;
     private ModelBatch modelBatch;
     private Model terrainModel;
+    private Model neighborTerrainModel;
     private Model waterModel;
     private ModelInstance terrainInstance;
+    private ModelInstance neighborTerrainInstance;
     private ModelInstance waterInstance;
+    private ModelInstance neighborWaterInstance;
     private LocalEnvironment localEnvironment;
     private WorldMinimap worldMinimap;
     private WorldCoordinateOverlay coordinateOverlay;
@@ -42,6 +45,10 @@ public final class EtsaWorld extends ApplicationAdapter {
     private final Vector3 cameraFocus = new Vector3();
     private Environment environment;
     private float waterTime;
+    private int tileX;
+    private int tileZ;
+    private int neighborTileX = Integer.MIN_VALUE;
+    private int neighborTileZ = Integer.MIN_VALUE;
 
     @Override
     public void create() {
@@ -49,14 +56,19 @@ public final class EtsaWorld extends ApplicationAdapter {
         cameraController = new RtsCameraController(camera);
         worldState = new PersistentWorldState();
         cameraController.setTarget(worldState.playerX(), worldState.playerZ());
+        tileX = WorldCoordinates.tileIndex(worldState.playerX());
+        tileZ = WorldCoordinates.tileIndex(worldState.playerZ());
         Gdx.input.setInputProcessor(new GestureDetector(cameraController));
 
         modelBatch = new ModelBatch();
-        terrainModel = createTerrainModel();
+        terrainModel = createTerrainModel(tileX, tileZ);
         terrainInstance = new ModelInstance(terrainModel);
+        terrainInstance.transform.setToTranslation(
+                WorldCoordinates.tileCenter(tileX), 0f, WorldCoordinates.tileCenter(tileZ));
         waterModel = createWaterModel();
         waterInstance = new ModelInstance(waterModel);
         localEnvironment = new LocalEnvironment();
+        localEnvironment.setTile(tileX, tileZ);
         worldMinimap = new WorldMinimap();
         coordinateOverlay = new WorldCoordinateOverlay();
 
@@ -76,14 +88,30 @@ public final class EtsaWorld extends ApplicationAdapter {
         cameraController.getTarget(cameraFocus);
         worldState.updatePlayerPosition(cameraFocus.x, cameraFocus.z,
                 Math.min(Gdx.graphics.getDeltaTime(), 0.05f));
+        updateTileResources(cameraFocus);
         localEnvironment.update(camera, cameraFocus);
         waterTime += Math.min(Gdx.graphics.getDeltaTime(), 0.05f);
         waterInstance.transform.setToTranslation(
-                MathUtils.sin(waterTime * 0.18f) * 6f,
-                MathUtils.sin(waterTime * 0.42f) * 0.12f, MathUtils.cos(waterTime * 0.16f) * 5f);
+                WorldCoordinates.tileCenter(tileX) + MathUtils.sin(waterTime * 0.18f) * 6f,
+                MathUtils.sin(waterTime * 0.42f) * 0.12f,
+                WorldCoordinates.tileCenter(tileZ) + MathUtils.cos(waterTime * 0.16f) * 5f);
+        if (neighborWaterInstance != null) {
+            neighborWaterInstance.transform.setToTranslation(
+                    WorldCoordinates.tileCenter(neighborTileX)
+                            + MathUtils.sin(waterTime * 0.18f) * 6f,
+                    MathUtils.sin(waterTime * 0.42f) * 0.12f,
+                    WorldCoordinates.tileCenter(neighborTileZ)
+                            + MathUtils.cos(waterTime * 0.16f) * 5f);
+        }
 
         modelBatch.begin(camera);
+        if (neighborTerrainInstance != null) {
+            modelBatch.render(neighborTerrainInstance, environment);
+        }
         modelBatch.render(terrainInstance, environment);
+        if (neighborWaterInstance != null) {
+            modelBatch.render(neighborWaterInstance, environment);
+        }
         modelBatch.render(waterInstance, environment);
         modelBatch.render(localEnvironment.cache(), environment);
         modelBatch.end();
@@ -108,13 +136,18 @@ public final class EtsaWorld extends ApplicationAdapter {
         worldState.flush();
         modelBatch.dispose();
         terrainModel.dispose();
+        if (neighborTerrainModel != null) {
+            neighborTerrainModel.dispose();
+        }
         waterModel.dispose();
         localEnvironment.dispose();
         worldMinimap.dispose();
         coordinateOverlay.dispose();
     }
 
-    private Model createTerrainModel() {
+    private Model createTerrainModel(int terrainTileX, int terrainTileZ) {
+        float tileCenterX = WorldCoordinates.tileCenter(terrainTileX);
+        float tileCenterZ = WorldCoordinates.tileCenter(terrainTileZ);
         int vertexCount = (GRID_CELLS + 1) * (GRID_CELLS + 1);
         float[] vertices = new float[vertexCount * FLOATS_PER_VERTEX];
         short[] indices = new short[GRID_CELLS * GRID_CELLS * 6];
@@ -128,7 +161,8 @@ public final class EtsaWorld extends ApplicationAdapter {
             float z = zIndex * spacing - halfSize;
             for (int xIndex = 0; xIndex <= GRID_CELLS; xIndex++) {
                 float x = xIndex * spacing - halfSize;
-                heights[zIndex * rowSize + xIndex] = WorldGenerator.height(x, z);
+                heights[zIndex * rowSize + xIndex] = WorldGenerator.height(
+                        tileCenterX + x, tileCenterZ + z);
             }
         }
 
@@ -151,7 +185,8 @@ public final class EtsaWorld extends ApplicationAdapter {
                 vertices[vertexOffset++] = normal.x;
                 vertices[vertexOffset++] = normal.y;
                 vertices[vertexOffset++] = normal.z;
-                vertices[vertexOffset++] = WorldGenerator.terrainColor(x, y, z, normal.x, normal.y, normal.z);
+                vertices[vertexOffset++] = WorldGenerator.terrainColor(
+                        tileCenterX + x, y, tileCenterZ + z, normal.x, normal.y, normal.z);
             }
         }
 
@@ -249,22 +284,107 @@ public final class EtsaWorld extends ApplicationAdapter {
         return modelBuilder.end();
     }
 
-    static boolean containsTerrainPosition(float x, float z) {
-        float halfSize = TERRAIN_SIZE * 0.5f;
-        return x >= -halfSize && x <= halfSize && z >= -halfSize && z <= halfSize;
+    private void updateTileResources(Vector3 focus) {
+        int focusTileX = WorldCoordinates.tileIndex(focus.x);
+        int focusTileZ = WorldCoordinates.tileIndex(focus.z);
+        if (focusTileX != tileX || focusTileZ != tileZ) {
+            int previousTileX = tileX;
+            int previousTileZ = tileZ;
+            Model previousTerrainModel = terrainModel;
+            ModelInstance previousTerrainInstance = terrainInstance;
+            if (neighborTerrainModel != null
+                    && neighborTileX == focusTileX && neighborTileZ == focusTileZ) {
+                terrainModel = neighborTerrainModel;
+                terrainInstance = neighborTerrainInstance;
+                neighborTerrainModel = previousTerrainModel;
+                neighborTerrainInstance = previousTerrainInstance;
+                neighborTileX = previousTileX;
+                neighborTileZ = previousTileZ;
+            } else {
+                Model loadedTerrainModel = createTerrainModel(focusTileX, focusTileZ);
+                ModelInstance loadedTerrainInstance = new ModelInstance(loadedTerrainModel);
+                loadedTerrainInstance.transform.setToTranslation(
+                        WorldCoordinates.tileCenter(focusTileX), 0f,
+                        WorldCoordinates.tileCenter(focusTileZ));
+                disposeNeighborTile();
+                terrainModel = loadedTerrainModel;
+                terrainInstance = loadedTerrainInstance;
+                neighborTerrainModel = previousTerrainModel;
+                neighborTerrainInstance = previousTerrainInstance;
+                neighborWaterInstance = new ModelInstance(waterModel);
+                neighborTileX = previousTileX;
+                neighborTileZ = previousTileZ;
+            }
+            tileX = focusTileX;
+            tileZ = focusTileZ;
+            localEnvironment.setTile(tileX, tileZ);
+        }
+
+        float localX = WorldCoordinates.localCoordinate(focus.x, tileX);
+        float localZ = WorldCoordinates.localCoordinate(focus.z, tileZ);
+        boolean nearXEdge = Math.abs(localX)
+                >= WorldCoordinates.HALF_TILE_SIZE - WorldCoordinates.EDGE_APPROACH_DISTANCE;
+        boolean nearZEdge = Math.abs(localZ)
+                >= WorldCoordinates.HALF_TILE_SIZE - WorldCoordinates.EDGE_APPROACH_DISTANCE;
+        if (!nearXEdge && !nearZEdge) {
+            disposeNeighborTile();
+            return;
+        }
+
+        int desiredTileX = tileX;
+        int desiredTileZ = tileZ;
+        if (nearXEdge && (!nearZEdge || Math.abs(localX) >= Math.abs(localZ))) {
+            desiredTileX += localX >= 0f ? 1 : -1;
+        } else {
+            desiredTileZ += localZ >= 0f ? 1 : -1;
+        }
+        if (neighborTerrainModel == null
+                || neighborTileX != desiredTileX || neighborTileZ != desiredTileZ) {
+            loadNeighborTile(desiredTileX, desiredTileZ);
+        }
+    }
+
+    private void loadNeighborTile(int newNeighborTileX, int newNeighborTileZ) {
+        Model loadedTerrainModel = createTerrainModel(newNeighborTileX, newNeighborTileZ);
+        ModelInstance loadedTerrainInstance = new ModelInstance(loadedTerrainModel);
+        loadedTerrainInstance.transform.setToTranslation(
+                WorldCoordinates.tileCenter(newNeighborTileX), 0f,
+                WorldCoordinates.tileCenter(newNeighborTileZ));
+        disposeNeighborTile();
+        neighborTerrainModel = loadedTerrainModel;
+        neighborTerrainInstance = loadedTerrainInstance;
+        neighborWaterInstance = new ModelInstance(waterModel);
+        neighborTileX = newNeighborTileX;
+        neighborTileZ = newNeighborTileZ;
+    }
+
+    private void disposeNeighborTile() {
+        if (neighborTerrainModel != null) {
+            neighborTerrainModel.dispose();
+            neighborTerrainModel = null;
+            neighborTerrainInstance = null;
+            neighborWaterInstance = null;
+        }
+        neighborTileX = Integer.MIN_VALUE;
+        neighborTileZ = Integer.MIN_VALUE;
     }
 
     static float terrainSurfaceHeight(float x, float z) {
         float spacing = TERRAIN_SIZE / GRID_CELLS;
-        float halfSize = TERRAIN_SIZE * 0.5f;
-        float gridX = MathUtils.clamp((x + halfSize) / spacing, 0f, GRID_CELLS);
-        float gridZ = MathUtils.clamp((z + halfSize) / spacing, 0f, GRID_CELLS);
+        int surfaceTileX = WorldCoordinates.tileIndex(x);
+        int surfaceTileZ = WorldCoordinates.tileIndex(z);
+        float originX = WorldCoordinates.tileCenter(surfaceTileX)
+                - WorldCoordinates.HALF_TILE_SIZE;
+        float originZ = WorldCoordinates.tileCenter(surfaceTileZ)
+                - WorldCoordinates.HALF_TILE_SIZE;
+        float gridX = MathUtils.clamp((x - originX) / spacing, 0f, GRID_CELLS);
+        float gridZ = MathUtils.clamp((z - originZ) / spacing, 0f, GRID_CELLS);
         int cellX = Math.min(GRID_CELLS - 1, MathUtils.floor(gridX));
         int cellZ = Math.min(GRID_CELLS - 1, MathUtils.floor(gridZ));
         float fractionX = gridX - cellX;
         float fractionZ = gridZ - cellZ;
-        float x0 = cellX * spacing - halfSize;
-        float z0 = cellZ * spacing - halfSize;
+        float x0 = originX + cellX * spacing;
+        float z0 = originZ + cellZ * spacing;
         float bottomLeft = WorldGenerator.height(x0, z0);
         float bottomRight = WorldGenerator.height(x0 + spacing, z0);
         float topLeft = WorldGenerator.height(x0, z0 + spacing);

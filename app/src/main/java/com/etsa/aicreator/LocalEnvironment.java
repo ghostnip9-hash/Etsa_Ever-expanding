@@ -24,6 +24,8 @@ final class LocalEnvironment {
 
     private final ModelCache cache = new ModelCache();
     private final Vector3 lastCenter = new Vector3(Float.MAX_VALUE, 0f, Float.MAX_VALUE);
+    private int tileX;
+    private int tileZ;
 
     private final Model trunkModel;
     private final Model paleTrunkModel;
@@ -84,7 +86,7 @@ final class LocalEnvironment {
                 }
 
                 float distance = (float) Math.sqrt(distanceSquared);
-                if (!EtsaWorld.containsTerrainPosition(x, z)) {
+                if (!WorldCoordinates.isInsideTile(x, z, tileX, tileZ)) {
                     continue;
                 }
                 float height = EtsaWorld.terrainSurfaceHeight(x, z);
@@ -118,6 +120,15 @@ final class LocalEnvironment {
         }
 
         cache.end();
+    }
+
+    void setTile(int newTileX, int newTileZ) {
+        if (tileX == newTileX && tileZ == newTileZ) {
+            return;
+        }
+        tileX = newTileX;
+        tileZ = newTileZ;
+        lastCenter.set(Float.MAX_VALUE, 0f, Float.MAX_VALUE);
     }
 
     ModelCache cache() {

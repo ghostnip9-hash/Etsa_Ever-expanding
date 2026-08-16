@@ -11,7 +11,6 @@ final class RtsCameraController extends GestureDetector.GestureAdapter {
     private static final float PITCH_DEGREES = 36f;
     private static final float MIN_DISTANCE = 90f;
     private static final float MAX_DISTANCE = 1_800f;
-    private static final float PAN_LIMIT = 2_850f;
     private static final float ROTATION_DEGREES_PER_PIXEL = 0.18f;
 
     private final PerspectiveCamera camera;
@@ -37,7 +36,7 @@ final class RtsCameraController extends GestureDetector.GestureAdapter {
         groundForward.set(camera.direction.x, 0f, camera.direction.z).nor();
         target.mulAdd(groundRight, -deltaX * worldUnitsPerPixel);
         target.mulAdd(groundForward, deltaY * worldUnitsPerPixel);
-        clampTarget();
+        updateTargetHeight();
         updateCamera();
         return true;
     }
@@ -84,7 +83,7 @@ final class RtsCameraController extends GestureDetector.GestureAdapter {
 
     void setTarget(float worldX, float worldZ) {
         target.set(worldX, 0f, worldZ);
-        clampTarget();
+        updateTargetHeight();
         updateCamera();
     }
 
@@ -94,9 +93,7 @@ final class RtsCameraController extends GestureDetector.GestureAdapter {
         updateCamera();
     }
 
-    private void clampTarget() {
-        target.x = MathUtils.clamp(target.x, -PAN_LIMIT, PAN_LIMIT);
-        target.z = MathUtils.clamp(target.z, -PAN_LIMIT, PAN_LIMIT);
+    private void updateTargetHeight() {
         target.y = EtsaWorld.terrainHeight(target.x, target.z);
     }
 

@@ -12,9 +12,6 @@ import com.badlogic.gdx.math.Vector3;
 
 /** Displays the persistent world position and future neighboring-tile destination. */
 final class WorldCoordinateOverlay {
-    private static final float TILE_SIZE = 6_000f;
-    private static final float HALF_TILE_SIZE = TILE_SIZE * 0.5f;
-    private static final float EDGE_NOTICE_DISTANCE = 250f;
     private static final float BEYOND_EDGE_DISTANCE = 35f;
     private static final float EDGE_END_MARGIN = 200f;
     private static final float MARGIN = 14f;
@@ -52,14 +49,16 @@ final class WorldCoordinateOverlay {
     void render(PerspectiveCamera camera, float worldX, float worldZ) {
         int roundedX = Math.round(worldX);
         int roundedZ = Math.round(worldZ);
-        int tileX = MathUtils.floor((worldX + HALF_TILE_SIZE) / TILE_SIZE);
-        int tileZ = MathUtils.floor((worldZ + HALF_TILE_SIZE) / TILE_SIZE);
-        float localX = worldX - tileX * TILE_SIZE;
-        float localZ = worldZ - tileZ * TILE_SIZE;
+        int tileX = WorldCoordinates.tileIndex(worldX);
+        int tileZ = WorldCoordinates.tileIndex(worldZ);
+        float localX = WorldCoordinates.localCoordinate(worldX, tileX);
+        float localZ = WorldCoordinates.localCoordinate(worldZ, tileZ);
         int nextTileX = tileX;
         int nextTileZ = tileZ;
-        boolean nearXEdge = Math.abs(localX) >= HALF_TILE_SIZE - EDGE_NOTICE_DISTANCE;
-        boolean nearZEdge = Math.abs(localZ) >= HALF_TILE_SIZE - EDGE_NOTICE_DISTANCE;
+        boolean nearXEdge = Math.abs(localX)
+                >= WorldCoordinates.HALF_TILE_SIZE - WorldCoordinates.EDGE_APPROACH_DISTANCE;
+        boolean nearZEdge = Math.abs(localZ)
+                >= WorldCoordinates.HALF_TILE_SIZE - WorldCoordinates.EDGE_APPROACH_DISTANCE;
         boolean hasNextTile = nearXEdge || nearZEdge;
         boolean useXEdge = nearXEdge && (!nearZEdge || Math.abs(localX) >= Math.abs(localZ));
 
@@ -102,7 +101,7 @@ final class WorldCoordinateOverlay {
         font.draw(batch, coordinateLayout, screenWidth - MARGIN - coordinateLayout.width,
                 screenHeight - MARGIN);
         if (hasNextTile) {
-            setGroundAnchor(useXEdge, localX, localZ);
+            setGroundAnchor(useXEdge, localX, localZ, tileX, tileZ);
             camera.project(groundAnchor, 0f, 0f, screenWidth, screenHeight);
             if (groundAnchor.z >= 0f && groundAnchor.z <= 1f
                     && groundAnchor.x >= 0f && groundAnchor.x <= screenWidth
@@ -121,20 +120,31 @@ final class WorldCoordinateOverlay {
         batch.dispose();
     }
 
-    private void setGroundAnchor(boolean useXEdge, float localX, float localZ) {
+    private void setGroundAnchor(boolean useXEdge, float localX, float localZ,
+                                 int tileX, int tileZ) {
+        float tileCenterX = WorldCoordinates.tileCenter(tileX);
+        float tileCenterZ = WorldCoordinates.tileCenter(tileZ);
         float anchorX;
         float anchorZ;
         if (useXEdge) {
-            anchorX = Math.copySign(HALF_TILE_SIZE + BEYOND_EDGE_DISTANCE, localX);
-            anchorZ = MathUtils.clamp(localZ, -HALF_TILE_SIZE + EDGE_END_MARGIN,
-                    HALF_TILE_SIZE - EDGE_END_MARGIN);
+            anchorX = tileCenterX + Math.copySign(
+                    WorldCoordinates.HALF_TILE_SIZE + BEYOND_EDGE_DISTANCE, localX);
+            anchorZ = tileCenterZ + MathUtils.clamp(localZ,
+                    -WorldCoordinates.HALF_TILE_SIZE + EDGE_END_MARGIN,
+                    WorldCoordinates.HALF_TILE_SIZE - EDGE_END_MARGIN);
         } else {
-            anchorX = MathUtils.clamp(localX, -HALF_TILE_SIZE + EDGE_END_MARGIN,
-                    HALF_TILE_SIZE - EDGE_END_MARGIN);
-            anchorZ = Math.copySign(HALF_TILE_SIZE + BEYOND_EDGE_DISTANCE, localZ);
+            anchorX = tileCenterX + MathUtils.clamp(localX,
+                    -WorldCoordinates.HALF_TILE_SIZE + EDGE_END_MARGIN,
+                    WorldCoordinates.HALF_TILE_SIZE - EDGE_END_MARGIN);
+            anchorZ = tileCenterZ + Math.copySign(
+                    WorldCoordinates.HALF_TILE_SIZE + BEYOND_EDGE_DISTANCE, localZ);
         }
-        float terrainX = MathUtils.clamp(anchorX, -HALF_TILE_SIZE, HALF_TILE_SIZE);
-        float terrainZ = MathUtils.clamp(anchorZ, -HALF_TILE_SIZE, HALF_TILE_SIZE);
+        float terrainX = MathUtils.clamp(anchorX,
+                tileCenterX - WorldCoordinates.HALF_TILE_SIZE,
+                tileCenterX + WorldCoordinates.HALF_TILE_SIZE);
+        float terrainZ = MathUtils.clamp(anchorZ,
+                tileCenterZ - WorldCoordinates.HALF_TILE_SIZE,
+                tileCenterZ + WorldCoordinates.HALF_TILE_SIZE);
         groundAnchor.set(anchorX, EtsaWorld.terrainSurfaceHeight(terrainX, terrainZ) + 1f, anchorZ);
     }
 }
