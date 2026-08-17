@@ -42,8 +42,9 @@ final class LocalCreatures {
     private final ArrayList<Model> models = new ArrayList<>();
     private final Model behemothBody, behemothArmor, behemothHead, behemothHorn, behemothLeg;
     private final Model direfangBody, direfangHead, direfangLeg, direfangFang;
-    private final Model wyvernBody, wyvernChest, wyvernBelly, wyvernNeck, wyvernHead;
-    private final Model wyvernJaw, wyvernMuzzle, wyvernLeftWing, wyvernRightWing;
+    private final Model wyvernBody, wyvernChest, wyvernHips, wyvernBelly, wyvernNeck;
+    private final Model wyvernHead, wyvernJaw, wyvernMuzzle, wyvernLeftWing, wyvernRightWing;
+    private final Model wyvernTailBase, wyvernTailMiddle, wyvernTailTip;
     private final Model wyvernHorn, wyvernSpine, wyvernLeg, wyvernFoot, wyvernClaw;
     private final Model wyvernEye, wyvernPupil;
     private final Model wraithCore, wraithShroud, wraithEye;
@@ -62,20 +63,24 @@ final class LocalCreatures {
         direfangHead = model(builder.createSphere(8f, 7f, 7f, 11, 8, material(0.46f, 0.18f, 0.13f), ATTRIBUTES));
         direfangLeg = model(builder.createCylinder(2.2f, 6f, 2.2f, 8, material(0.18f, 0.08f, 0.07f), ATTRIBUTES));
         direfangFang = model(builder.createCone(1.3f, 4.5f, 1.3f, 7, material(0.90f, 0.84f, 0.65f), ATTRIBUTES));
-        wyvernBody = model(builder.createSphere(26f, 13f, 16f, 18, 12, material(0.035f, 0.10f, 0.24f), ATTRIBUTES));
-        wyvernChest = model(builder.createSphere(18f, 17f, 19f, 16, 11, material(0.05f, 0.16f, 0.34f), ATTRIBUTES));
-        wyvernBelly = model(builder.createSphere(20f, 7f, 11f, 15, 9, material(0.76f, 0.72f, 0.57f), ATTRIBUTES));
-        wyvernNeck = model(builder.createSphere(18f, 9f, 10f, 15, 10, material(0.055f, 0.14f, 0.31f), ATTRIBUTES));
-        wyvernHead = model(builder.createSphere(14f, 9f, 10f, 16, 11, material(0.04f, 0.12f, 0.29f), ATTRIBUTES));
-        wyvernJaw = model(builder.createSphere(13f, 4.5f, 8f, 14, 8, material(0.78f, 0.74f, 0.60f), ATTRIBUTES));
-        wyvernMuzzle = model(builder.createSphere(13f, 5.5f, 7f, 15, 9, material(0.07f, 0.18f, 0.38f), ATTRIBUTES));
+        wyvernBody = createWyvernHull(builder, 32f, 14f, 17f, 0.72f, 0.76f, 0.035f, 0.10f, 0.24f);
+        wyvernChest = createWyvernHull(builder, 24f, 18f, 20f, 0.68f, 0.72f, 0.05f, 0.16f, 0.34f);
+        wyvernHips = createWyvernHull(builder, 22f, 12f, 15f, 0.76f, 0.58f, 0.03f, 0.085f, 0.21f);
+        wyvernBelly = createWyvernHull(builder, 24f, 7f, 11f, 0.66f, 0.62f, 0.76f, 0.72f, 0.57f);
+        wyvernNeck = createWyvernHull(builder, 23f, 9f, 10f, 0.64f, 0.76f, 0.055f, 0.14f, 0.31f);
+        wyvernHead = createWyvernHull(builder, 17f, 10f, 11f, 0.42f, 0.78f, 0.04f, 0.12f, 0.29f);
+        wyvernJaw = createWyvernHull(builder, 15f, 4.5f, 8f, 0.28f, 0.72f, 0.78f, 0.74f, 0.60f);
+        wyvernMuzzle = createWyvernHull(builder, 15f, 5.5f, 7f, 0.22f, 0.74f, 0.07f, 0.18f, 0.38f);
         wyvernLeftWing = createWyvernWing(builder, 1f);
         wyvernRightWing = createWyvernWing(builder, -1f);
+        wyvernTailBase = createWyvernHull(builder, 26f, 8f, 9f, 0.58f, 0.88f, 0.04f, 0.11f, 0.25f);
+        wyvernTailMiddle = createWyvernHull(builder, 23f, 5.8f, 6.5f, 0.45f, 0.76f, 0.045f, 0.12f, 0.27f);
+        wyvernTailTip = createWyvernHull(builder, 24f, 3.8f, 4.2f, 0.08f, 0.66f, 0.05f, 0.13f, 0.29f);
         wyvernHorn = model(builder.createCone(2.5f, 11f, 2.5f, 9, material(0.18f, 0.22f, 0.28f), ATTRIBUTES));
         wyvernSpine = model(builder.createCone(3.2f, 10f, 3.2f, 8, material(0.08f, 0.16f, 0.30f), ATTRIBUTES));
-        wyvernLeg = model(builder.createCylinder(4.2f, 13f, 4.2f, 10, material(0.055f, 0.13f, 0.27f), ATTRIBUTES));
-        wyvernFoot = model(builder.createSphere(9f, 3.5f, 5f, 11, 7, material(0.06f, 0.14f, 0.28f), ATTRIBUTES));
-        wyvernClaw = model(builder.createCone(1.6f, 6f, 1.6f, 7, material(0.83f, 0.78f, 0.61f), ATTRIBUTES));
+        wyvernLeg = createWyvernHull(builder, 15f, 5f, 5f, 0.62f, 0.82f, 0.055f, 0.13f, 0.27f);
+        wyvernFoot = createWyvernHull(builder, 12f, 4f, 6f, 0.42f, 0.78f, 0.06f, 0.14f, 0.28f);
+        wyvernClaw = model(builder.createCone(1.8f, 7f, 1.8f, 7, material(0.83f, 0.78f, 0.61f), ATTRIBUTES));
         wyvernEye = model(builder.createSphere(2.5f, 2.5f, 2.5f, 10, 8, material(0.95f, 0.66f, 0.08f), ATTRIBUTES));
         wyvernPupil = model(builder.createSphere(1.0f, 1.8f, 1.0f, 8, 6, material(0.015f, 0.012f, 0.01f), ATTRIBUTES));
         wraithCore = model(builder.createSphere(10f, 5f, 7f, 12, 8, material(0.25f, 0.18f, 0.49f), ATTRIBUTES));
@@ -271,57 +276,57 @@ final class LocalCreatures {
         Creature creature = new Creature(AIR, x, z, phase, 78f + index * 12f, 0.50f);
         creature.wyvern = true;
 
-        creature.addWyvern(wyvernBody, 0f, 1f, 0f, 1f, 1f, 1f, WYVERN_RIGID, 0f, 0f, 0f);
-        creature.addWyvern(wyvernChest, 8f, 4f, 0f, 1f, 1f, 1f, WYVERN_RIGID, 0f, 0f, 0f);
-        creature.addWyvern(wyvernBelly, 6f, -3.5f, 0f, 1f, 1f, 1f, WYVERN_RIGID, 0f, 0f, 0f);
+        creature.addWyvern(wyvernBody, -1f, 1f, 0f, 1f, 1f, 1f, WYVERN_RIGID, 0f, 0f, 0f);
+        creature.addWyvern(wyvernChest, 11f, 4f, 0f, 1f, 1f, 1f, WYVERN_RIGID, 0f, 0f, 5f);
+        creature.addWyvern(wyvernHips, -14f, 0f, 0f, 1f, 1f, 1f, WYVERN_RIGID, 0f, 0f, -4f);
+        creature.addWyvern(wyvernBelly, 5f, -4f, 0f, 1f, 1f, 1f, WYVERN_RIGID, 0f, 0f, 4f);
 
-        creature.addWyvern(wyvernNeck, 18f, 8f, 0f, 1f, 1f, 1f, WYVERN_RIGID, 0f, 0f, 24f);
-        creature.addWyvern(wyvernNeck, 26f, 16f, 0f, 0.85f, 0.88f, 0.88f, WYVERN_RIGID, 0f, 0f, 34f);
-        creature.addWyvern(wyvernHead, 34f, 22f, 0f, 1f, 1f, 1f, WYVERN_RIGID, 0f, 0f, -8f);
-        creature.addWyvern(wyvernMuzzle, 44f, 20f, 0f, 1f, 1f, 1f, WYVERN_RIGID, 0f, 0f, -5f);
-        creature.addWyvern(wyvernJaw, 43f, 15.5f, 0f, 1f, 1f, 1f, WYVERN_RIGID, 0f, 0f, -8f);
-        creature.addWyvern(wyvernEye, 37f, 24f, -5.1f, 1f, 1f, 1f, WYVERN_RIGID, 0f, 0f, 0f);
-        creature.addWyvern(wyvernEye, 37f, 24f, 5.1f, 1f, 1f, 1f, WYVERN_RIGID, 0f, 0f, 0f);
-        creature.addWyvern(wyvernPupil, 38f, 24f, -6.2f, 1f, 1f, 1f, WYVERN_RIGID, 0f, 0f, 0f);
-        creature.addWyvern(wyvernPupil, 38f, 24f, 6.2f, 1f, 1f, 1f, WYVERN_RIGID, 0f, 0f, 0f);
+        creature.addWyvern(wyvernNeck, 21f, 9f, 0f, 1f, 1f, 1f, WYVERN_RIGID, 0f, 0f, 25f);
+        creature.addWyvern(wyvernNeck, 30f, 18f, 0f, 0.82f, 0.86f, 0.86f, WYVERN_RIGID, 0f, 0f, 34f);
+        creature.addWyvern(wyvernHead, 39f, 24f, 0f, 1f, 1f, 1f, WYVERN_RIGID, 0f, 0f, -7f);
+        creature.addWyvern(wyvernMuzzle, 50f, 22f, 0f, 1f, 1f, 1f, WYVERN_RIGID, 0f, 0f, -5f);
+        creature.addWyvern(wyvernJaw, 49f, 17.5f, 0f, 1f, 1f, 1f, WYVERN_RIGID, 0f, 0f, -9f);
+        creature.addWyvern(wyvernEye, 42f, 26f, -5.2f, 1f, 1f, 1f, WYVERN_RIGID, 0f, 0f, 0f);
+        creature.addWyvern(wyvernEye, 42f, 26f, 5.2f, 1f, 1f, 1f, WYVERN_RIGID, 0f, 0f, 0f);
+        creature.addWyvern(wyvernPupil, 43f, 26f, -6.25f, 1f, 1f, 1f, WYVERN_RIGID, 0f, 0f, 0f);
+        creature.addWyvern(wyvernPupil, 43f, 26f, 6.25f, 1f, 1f, 1f, WYVERN_RIGID, 0f, 0f, 0f);
 
-        creature.addWyvern(wyvernHorn, 30f, 30f, -4.5f, 1f, 1f, 1f, WYVERN_RIGID, 0f, 0f, -34f);
-        creature.addWyvern(wyvernHorn, 30f, 30f, 4.5f, 1f, 1f, 1f, WYVERN_RIGID, 0f, 0f, -34f);
-        creature.addWyvern(wyvernSpine, 22f, 25f, 0f, 0.8f, 0.9f, 0.8f, WYVERN_RIGID, 0f, 0f, -18f);
-        creature.addWyvern(wyvernSpine, 12f, 19f, 0f, 1f, 1f, 1f, WYVERN_RIGID, 0f, 0f, -12f);
+        creature.addWyvern(wyvernHorn, 36f, 32f, -4.5f, 1f, 1f, 1f, WYVERN_RIGID, 0f, 0f, -34f);
+        creature.addWyvern(wyvernHorn, 36f, 32f, 4.5f, 1f, 1f, 1f, WYVERN_RIGID, 0f, 0f, -34f);
+        creature.addWyvern(wyvernSpine, 27f, 27f, 0f, 0.8f, 0.9f, 0.8f, WYVERN_RIGID, 0f, 0f, -18f);
+        creature.addWyvern(wyvernSpine, 17f, 20f, 0f, 1f, 1f, 1f, WYVERN_RIGID, 0f, 0f, -12f);
         creature.addWyvern(wyvernSpine, 0f, 14f, 0f, 1.15f, 1.15f, 1.15f, WYVERN_RIGID, 0f, 0f, 0f);
         creature.addWyvern(wyvernSpine, -12f, 10f, 0f, 1f, 1f, 1f, WYVERN_RIGID, 0f, 0f, 8f);
 
-        creature.addWyvern(wyvernLeftWing, 5f, 8f, 0f, 1f, 1f, 1f, WYVERN_LEFT_WING, 0f, 0f, 0f);
-        creature.addWyvern(wyvernRightWing, 5f, 8f, 0f, 1f, 1f, 1f, WYVERN_RIGHT_WING, 0f, 0f, 0f);
+        creature.addWyvern(wyvernLeftWing, 7f, 10f, 6f, 1f, 1f, 1f, WYVERN_LEFT_WING, 0f, 0f, 0f);
+        creature.addWyvern(wyvernRightWing, 7f, 10f, -6f, 1f, 1f, 1f, WYVERN_RIGHT_WING, 0f, 0f, 0f);
 
-        addWyvernLeg(creature, -5f, -8f, -8f, -13f);
-        addWyvernLeg(creature, -5f, -8f, 8f, 13f);
+        addWyvernLeg(creature, -6f, -7f, -9f);
+        addWyvernLeg(creature, -6f, -7f, 9f);
 
-        creature.addWyvern(wyvernNeck, -18f, 0f, 0f, 1.05f, 0.78f, 0.78f, WYVERN_TAIL_1, 0f, 0f, 4f);
-        creature.addWyvern(wyvernNeck, -34f, -1f, 0f, 0.88f, 0.58f, 0.58f, WYVERN_TAIL_2, 0f, 0f, 3f);
-        creature.addWyvern(wyvernNeck, -48f, -1.5f, 0f, 0.72f, 0.42f, 0.42f, WYVERN_TAIL_3, 0f, 0f, 2f);
-        creature.addWyvern(wyvernNeck, -60f, -1f, 0f, 0.55f, 0.27f, 0.27f, WYVERN_TAIL_3, 0f, 0f, 5f);
+        creature.addWyvern(wyvernTailBase, -25f, -1f, 0f, 1f, 1f, 1f, WYVERN_TAIL_1, 0f, 0f, 2f);
+        creature.addWyvern(wyvernTailMiddle, -47f, -1.5f, 0f, 1f, 1f, 1f, WYVERN_TAIL_2, 0f, 0f, 2f);
+        creature.addWyvern(wyvernTailTip, -68f, -1f, 0f, 1f, 1f, 1f, WYVERN_TAIL_3, 0f, 0f, 3f);
         creature.addWyvern(wyvernSpine, -23f, 7f, 0f, 0.8f, 0.8f, 0.8f, WYVERN_TAIL_1, 0f, 0f, 10f);
         creature.addWyvern(wyvernSpine, -37f, 5f, 0f, 0.65f, 0.65f, 0.65f, WYVERN_TAIL_2, 0f, 0f, 14f);
         creature.addWyvern(wyvernSpine, -50f, 3f, 0f, 0.5f, 0.5f, 0.5f, WYVERN_TAIL_3, 0f, 0f, 18f);
         return creature;
     }
 
-    private void addWyvernLeg(Creature creature, float forward, float up, float side,
-                              float clawSide) {
+    private void addWyvernLeg(Creature creature, float forward, float up, float side) {
         creature.addWyvern(wyvernLeg, forward, up, side, 1f, 1f, 1f,
-                WYVERN_RIGID, 20f, 0f, -25f);
-        creature.addWyvern(wyvernLeg, forward - 6f, up - 9f, side, 0.75f, 0.82f, 0.75f,
-                WYVERN_RIGID, 0f, 0f, 50f);
-        creature.addWyvern(wyvernFoot, forward - 2f, up - 14f, side, 1f, 1f, 1f,
-                WYVERN_RIGID, 0f, 0f, 0f);
-        creature.addWyvern(wyvernClaw, forward + 2f, up - 16f, clawSide * 0.72f,
-                1f, 1f, 1f, WYVERN_RIGID, 0f, 0f, -70f);
-        creature.addWyvern(wyvernClaw, forward + 2f, up - 16f, clawSide,
-                1f, 1f, 1f, WYVERN_RIGID, 0f, 0f, -70f);
-        creature.addWyvern(wyvernClaw, forward + 2f, up - 16f, clawSide * 1.25f,
-                1f, 1f, 1f, WYVERN_RIGID, 0f, 0f, -70f);
+                WYVERN_RIGID, 0f, 0f, -55f);
+        creature.addWyvern(wyvernLeg, forward - 7f, up - 9f, side, 0.82f, 0.82f, 0.82f,
+                WYVERN_RIGID, 0f, 0f, 62f);
+        creature.addWyvern(wyvernFoot, forward - 3f, up - 16f, side, 1f, 1f, 1f,
+                WYVERN_RIGID, 0f, 0f, -8f);
+        float outward = side < 0f ? -1f : 1f;
+        creature.addWyvern(wyvernClaw, forward + 2f, up - 19f, side - outward * 3.2f,
+                1f, 1f, 1f, WYVERN_RIGID, 0f, 0f, -68f);
+        creature.addWyvern(wyvernClaw, forward + 3f, up - 19.5f, side,
+                1f, 1f, 1f, WYVERN_RIGID, 0f, 0f, -68f);
+        creature.addWyvern(wyvernClaw, forward + 2f, up - 19f, side + outward * 3.2f,
+                1f, 1f, 1f, WYVERN_RIGID, 0f, 0f, -68f);
     }
 
     private Creature createSkyWraith(float x, float z, float phase, int index) {
@@ -387,33 +392,76 @@ final class LocalCreatures {
         return model;
     }
 
+    private Model createWyvernHull(ModelBuilder builder, float length, float height,
+                                    float width, float frontTaper, float rearTaper,
+                                    float red, float green, float blue) {
+        builder.begin();
+        MeshPartBuilder hull = builder.part("wyvern-hull", GL20.GL_TRIANGLES,
+                ATTRIBUTES, material(red, green, blue));
+        final int sides = 8;
+        final int rings = 5;
+        float[] positions = {-0.5f, -0.27f, 0f, 0.28f, 0.5f};
+        float[] scales = {rearTaper, 0.92f, 1f, 0.91f, frontTaper};
+        Vector3[][] vertices = new Vector3[rings][sides];
+        for (int ring = 0; ring < rings; ring++) {
+            for (int sideIndex = 0; sideIndex < sides; sideIndex++) {
+                float angle = MathUtils.PI2 * sideIndex / sides;
+                vertices[ring][sideIndex] = new Vector3(
+                        positions[ring] * length,
+                        MathUtils.cos(angle) * height * 0.5f * scales[ring],
+                        MathUtils.sin(angle) * width * 0.5f * scales[ring]);
+            }
+        }
+        for (int ring = 0; ring < rings - 1; ring++) {
+            for (int sideIndex = 0; sideIndex < sides; sideIndex++) {
+                int next = (sideIndex + 1) % sides;
+                addDoubleTriangle(hull, vertices[ring][sideIndex],
+                        vertices[ring + 1][sideIndex], vertices[ring + 1][next]);
+                addDoubleTriangle(hull, vertices[ring][sideIndex],
+                        vertices[ring + 1][next], vertices[ring][next]);
+            }
+        }
+        Vector3 rearCenter = new Vector3(-length * 0.5f, 0f, 0f);
+        Vector3 frontCenter = new Vector3(length * 0.5f, 0f, 0f);
+        for (int sideIndex = 0; sideIndex < sides; sideIndex++) {
+            int next = (sideIndex + 1) % sides;
+            addDoubleTriangle(hull, rearCenter, vertices[0][next], vertices[0][sideIndex]);
+            addDoubleTriangle(hull, frontCenter, vertices[rings - 1][sideIndex],
+                    vertices[rings - 1][next]);
+        }
+        return model(builder.end());
+    }
+
     private Model createWyvernWing(ModelBuilder builder, float side) {
         builder.begin();
+        Vector3 root = new Vector3(0f, 0f, 0f);
+        Vector3 elbow = new Vector3(10f, 7f, side * 18f);
+        Vector3 wrist = new Vector3(5f, 10f, side * 34f);
+        Vector3 primaryTip = new Vector3(-3f, 7f, side * 61f);
+        Vector3 secondTip = new Vector3(-12f, 3f, side * 54f);
+        Vector3 thirdTip = new Vector3(-20f, 0f, side * 45f);
+        Vector3 fourthTip = new Vector3(-25f, -2f, side * 34f);
+        Vector3 innerNotch = new Vector3(-17f, -2f, side * 20f);
+        Vector3 rearRoot = new Vector3(-10f, 0f, side * 7f);
+
         MeshPartBuilder membrane = builder.part("wyvern-membrane", GL20.GL_TRIANGLES,
-                ATTRIBUTES, material(0.68f, 0.49f, 0.25f));
-        Vector3 root = new Vector3(0f, 0f, side * 2f);
-        Vector3 wrist = new Vector3(7f, 4f, side * 24f);
-        Vector3 tip = new Vector3(-2f, 1f, side * 60f);
-        Vector3 outerRear = new Vector3(-17f, -2f, side * 50f);
-        Vector3 scallopOne = new Vector3(-12f, -3f, side * 39f);
-        Vector3 scallopTwo = new Vector3(-24f, -3f, side * 29f);
-        Vector3 scallopThree = new Vector3(-17f, -2f, side * 18f);
-        Vector3 rearRoot = new Vector3(-9f, 0f, side * 4f);
-        addDoubleTriangle(membrane, root, wrist, rearRoot);
-        addDoubleTriangle(membrane, wrist, scallopThree, rearRoot);
-        addDoubleTriangle(membrane, wrist, scallopTwo, scallopThree);
-        addDoubleTriangle(membrane, wrist, scallopOne, scallopTwo);
-        addDoubleTriangle(membrane, wrist, outerRear, scallopOne);
-        addDoubleTriangle(membrane, wrist, tip, outerRear);
+                ATTRIBUTES, material(0.70f, 0.47f, 0.22f));
+        addDoubleTriangle(membrane, root, elbow, rearRoot);
+        addDoubleTriangle(membrane, elbow, innerNotch, rearRoot);
+        addDoubleTriangle(membrane, elbow, wrist, innerNotch);
+        addDoubleTriangle(membrane, wrist, fourthTip, innerNotch);
+        addDoubleTriangle(membrane, wrist, thirdTip, fourthTip);
+        addDoubleTriangle(membrane, wrist, secondTip, thirdTip);
+        addDoubleTriangle(membrane, wrist, primaryTip, secondTip);
 
         MeshPartBuilder bones = builder.part("wyvern-wing-bones", GL20.GL_TRIANGLES,
                 ATTRIBUTES, material(0.035f, 0.10f, 0.23f));
-        addWingRibbon(bones, root, wrist, 1.8f);
-        addWingRibbon(bones, wrist, tip, 1.5f);
-        addWingRibbon(bones, root, scallopThree, 1.15f);
-        addWingRibbon(bones, root, scallopTwo, 1.05f);
-        addWingRibbon(bones, root, scallopOne, 0.95f);
-        addWingRibbon(bones, root, outerRear, 0.85f);
+        addWingRibbon(bones, root, elbow, 2.2f);
+        addWingRibbon(bones, elbow, wrist, 1.9f);
+        addWingRibbon(bones, wrist, primaryTip, 1.35f);
+        addWingRibbon(bones, wrist, secondTip, 1.15f);
+        addWingRibbon(bones, wrist, thirdTip, 1.0f);
+        addWingRibbon(bones, wrist, fourthTip, 0.85f);
         return model(builder.end());
     }
 
