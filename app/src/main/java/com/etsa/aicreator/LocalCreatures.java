@@ -31,48 +31,46 @@ final class LocalCreatures {
 
     private final ArrayList<TilePopulation> populations = new ArrayList<>(MAX_TILE_POPULATIONS);
 
-    private final Model landBody;
-    private final Model landHead;
-    private final Model landHorn;
-    private final Model landLeg;
-    private final Model landSpine;
-    private final Model airBody;
-    private final Model airWing;
-    private final Model airEye;
-    private final Model airCrest;
-    private final Model waterBody;
-    private final Model waterFin;
-    private final Model waterEye;
+    private final ArrayList<Model> models = new ArrayList<>();
+    private final Model behemothBody, behemothArmor, behemothHead, behemothHorn, behemothLeg;
+    private final Model direfangBody, direfangHead, direfangLeg, direfangFang;
+    private final Model wyvernBody, wyvernNeck, wyvernHead, wyvernWing, wyvernMembrane;
+    private final Model wyvernHorn, wyvernLeg;
+    private final Model wraithCore, wraithShroud, wraithEye;
+    private final Model squidMantle, squidHead, squidEye, squidArm, squidTentacle;
+    private final Model crawlerBody, crawlerHead, crawlerLeg, crawlerEye;
     private float elapsedTime;
 
     LocalCreatures() {
         ModelBuilder builder = new ModelBuilder();
-        landBody = builder.createSphere(15f, 7f, 9f, 12, 9,
-                material(0.24f, 0.43f, 0.16f), ATTRIBUTES);
-        landHead = builder.createSphere(7.5f, 6.5f, 7.5f, 10, 8,
-                material(0.40f, 0.57f, 0.21f), ATTRIBUTES);
-        landHorn = builder.createCone(2.2f, 7f, 2.2f, 8,
-                material(0.72f, 0.67f, 0.44f), ATTRIBUTES);
-        landLeg = builder.createCylinder(2.3f, 5f, 2.3f, 8,
-                material(0.18f, 0.31f, 0.12f), ATTRIBUTES);
-        landSpine = builder.createCone(2.8f, 5.5f, 2.8f, 7,
-                material(0.52f, 0.68f, 0.25f), ATTRIBUTES);
-
-        airBody = builder.createSphere(13f, 4.2f, 16f, 12, 8,
-                material(0.27f, 0.19f, 0.58f), ATTRIBUTES);
-        airWing = builder.createSphere(16f, 2.2f, 9f, 11, 7,
-                material(0.50f, 0.35f, 0.78f), ATTRIBUTES);
-        airEye = builder.createSphere(1.9f, 1.9f, 1.9f, 8, 6,
-                material(0.76f, 0.96f, 1f), ATTRIBUTES);
-        airCrest = builder.createCone(3.2f, 7f, 3.2f, 8,
-                material(0.68f, 0.48f, 0.88f), ATTRIBUTES);
-
-        waterBody = builder.createSphere(17f, 6.5f, 10f, 12, 9,
-                material(0.07f, 0.47f, 0.50f), ATTRIBUTES);
-        waterFin = builder.createCone(5f, 9f, 5f, 8,
-                material(0.10f, 0.72f, 0.61f), ATTRIBUTES);
-        waterEye = builder.createSphere(2.1f, 2.1f, 2.1f, 8, 6,
-                material(0.94f, 0.81f, 0.20f), ATTRIBUTES);
+        behemothBody = model(builder.createSphere(22f, 12f, 14f, 14, 10, material(0.28f, 0.22f, 0.14f), ATTRIBUTES));
+        behemothArmor = model(builder.createSphere(13f, 7f, 15f, 12, 8, material(0.43f, 0.35f, 0.21f), ATTRIBUTES));
+        behemothHead = model(builder.createSphere(11f, 9f, 10f, 12, 9, material(0.34f, 0.27f, 0.16f), ATTRIBUTES));
+        behemothHorn = model(builder.createCone(3.4f, 10f, 3.4f, 9, material(0.78f, 0.70f, 0.48f), ATTRIBUTES));
+        behemothLeg = model(builder.createCylinder(4.5f, 9f, 4.5f, 10, material(0.20f, 0.17f, 0.11f), ATTRIBUTES));
+        direfangBody = model(builder.createSphere(16f, 7f, 9f, 13, 9, material(0.30f, 0.12f, 0.11f), ATTRIBUTES));
+        direfangHead = model(builder.createSphere(8f, 7f, 7f, 11, 8, material(0.46f, 0.18f, 0.13f), ATTRIBUTES));
+        direfangLeg = model(builder.createCylinder(2.2f, 6f, 2.2f, 8, material(0.18f, 0.08f, 0.07f), ATTRIBUTES));
+        direfangFang = model(builder.createCone(1.3f, 4.5f, 1.3f, 7, material(0.90f, 0.84f, 0.65f), ATTRIBUTES));
+        wyvernBody = model(builder.createSphere(19f, 8f, 11f, 16, 11, material(0.18f, 0.33f, 0.19f), ATTRIBUTES));
+        wyvernNeck = model(builder.createSphere(13f, 6f, 7f, 13, 9, material(0.25f, 0.46f, 0.25f), ATTRIBUTES));
+        wyvernHead = model(builder.createSphere(10f, 7f, 8f, 14, 10, material(0.33f, 0.55f, 0.27f), ATTRIBUTES));
+        wyvernWing = model(builder.createSphere(26f, 2.4f, 9f, 14, 7, material(0.12f, 0.25f, 0.14f), ATTRIBUTES));
+        wyvernMembrane = model(builder.createSphere(22f, 1.4f, 12f, 14, 7, material(0.48f, 0.22f, 0.18f), ATTRIBUTES));
+        wyvernHorn = model(builder.createCone(2.2f, 8f, 2.2f, 8, material(0.72f, 0.66f, 0.43f), ATTRIBUTES));
+        wyvernLeg = model(builder.createCylinder(3f, 8f, 3f, 9, material(0.14f, 0.27f, 0.15f), ATTRIBUTES));
+        wraithCore = model(builder.createSphere(10f, 5f, 7f, 12, 8, material(0.25f, 0.18f, 0.49f), ATTRIBUTES));
+        wraithShroud = model(builder.createCone(13f, 18f, 13f, 12, material(0.39f, 0.30f, 0.68f), ATTRIBUTES));
+        wraithEye = model(builder.createSphere(1.6f, 1.6f, 1.6f, 8, 6, material(0.67f, 0.95f, 1f), ATTRIBUTES));
+        squidMantle = model(builder.createSphere(24f, 13f, 16f, 16, 11, material(0.30f, 0.10f, 0.36f), ATTRIBUTES));
+        squidHead = model(builder.createSphere(16f, 11f, 14f, 15, 10, material(0.43f, 0.15f, 0.45f), ATTRIBUTES));
+        squidEye = model(builder.createSphere(4.2f, 4.2f, 4.2f, 10, 8, material(0.95f, 0.78f, 0.20f), ATTRIBUTES));
+        squidArm = model(builder.createSphere(15f, 2.4f, 3f, 10, 7, material(0.38f, 0.12f, 0.41f), ATTRIBUTES));
+        squidTentacle = model(builder.createSphere(29f, 2.1f, 2.6f, 12, 7, material(0.53f, 0.18f, 0.51f), ATTRIBUTES));
+        crawlerBody = model(builder.createSphere(16f, 6f, 13f, 13, 9, material(0.12f, 0.39f, 0.28f), ATTRIBUTES));
+        crawlerHead = model(builder.createSphere(10f, 5f, 11f, 12, 8, material(0.18f, 0.53f, 0.35f), ATTRIBUTES));
+        crawlerLeg = model(builder.createSphere(9f, 2f, 3f, 9, 6, material(0.09f, 0.29f, 0.21f), ATTRIBUTES));
+        crawlerEye = model(builder.createSphere(2.2f, 2.2f, 2.2f, 8, 6, material(0.90f, 0.90f, 0.25f), ATTRIBUTES));
     }
 
     void update(float deltaSeconds, PerspectiveCamera camera, Vector3 focus,
@@ -113,18 +111,9 @@ final class LocalCreatures {
 
     void dispose() {
         populations.clear();
-        landBody.dispose();
-        landHead.dispose();
-        landHorn.dispose();
-        landLeg.dispose();
-        landSpine.dispose();
-        airBody.dispose();
-        airWing.dispose();
-        airEye.dispose();
-        airCrest.dispose();
-        waterBody.dispose();
-        waterFin.dispose();
-        waterEye.dispose();
+        for (int index = 0; index < models.size(); index++) {
+            models.get(index).dispose();
+        }
     }
 
     private void removeInvisiblePopulations(int activeTileX, int activeTileZ,
@@ -194,11 +183,11 @@ final class LocalCreatures {
             if (landCount < CREATURES_PER_KIND
                     && generatedHeight > WorldGenerator.WATER_LEVEL + 5f
                     && WorldGenerator.slope(x, z) < 0.65f) {
-                population.creatures.add(createLandProwler(x, z, phase));
+                population.creatures.add(createLandCreature(x, z, phase, landCount));
                 landCount++;
             } else if (waterCount < CREATURES_PER_KIND
                     && generatedHeight < WorldGenerator.WATER_LEVEL - 2.5f) {
-                population.creatures.add(createReefBeast(x, z, phase));
+                population.creatures.add(createWaterCreature(x, z, phase, waterCount));
                 waterCount++;
             }
         }
@@ -217,47 +206,112 @@ final class LocalCreatures {
                     population.tileZ);
             float phase = WorldGenerator.random01(anchorCellX, anchorCellZ,
                     809 + index * 43) * MathUtils.PI2;
-            population.creatures.add(createSkyRay(x, z, phase, index));
+            population.creatures.add(createAirCreature(x, z, phase, index));
         }
     }
 
-    private Creature createLandProwler(float x, float z, float phase) {
+    private Creature createLandCreature(float x, float z, float phase, int index) {
+        return index == 0 ? createHornedBehemoth(x, z, phase) : createDirefang(x, z, phase);
+    }
+
+    private Creature createHornedBehemoth(float x, float z, float phase) {
         Creature creature = new Creature(LAND, x, z, phase, 12f, 0.34f);
-        creature.add(landBody, 0f, 5.5f, 0f, 1f, 1f, 1f, false);
-        creature.add(landHead, 7.2f, 7.3f, 0f, 1f, 1f, 1f, false);
-        creature.add(landHorn, 8f, 12.2f, 0f, 1f, 1f, 1f, false);
-        creature.add(landHorn, 5.7f, 10.8f, -2.3f, 0.72f, 0.78f, 0.72f, false);
-        creature.add(landHorn, 5.7f, 10.8f, 2.3f, 0.72f, 0.78f, 0.72f, false);
-        creature.add(landSpine, -1f, 10f, 0f, 1f, 1f, 1f, false);
-        creature.add(landSpine, -5f, 9f, 0f, 0.78f, 0.78f, 0.78f, false);
-        creature.add(landLeg, -4.5f, 2.5f, -2.8f, 1f, 1f, 1f, true);
-        creature.add(landLeg, 4.5f, 2.5f, -2.8f, 1f, 1f, 1f, true);
-        creature.add(landLeg, -4.5f, 2.5f, 2.8f, 1f, 1f, 1f, true);
-        creature.add(landLeg, 4.5f, 2.5f, 2.8f, 1f, 1f, 1f, true);
+        creature.add(behemothBody, 0f, 10f, 0f, 1f, 1f, 1f, false);
+        creature.add(behemothArmor, -5f, 15f, 0f, 1f, 1f, 1f, false);
+        creature.add(behemothHead, 14f, 11f, 0f, 1f, 1f, 1f, false);
+        creature.add(behemothHorn, 18f, 18f, -4f, 1f, 1f, 1f, false);
+        creature.add(behemothHorn, 18f, 18f, 4f, 1f, 1f, 1f, false);
+        creature.add(behemothHorn, 9f, 20f, 0f, 0.75f, 0.8f, 0.75f, false);
+        creature.add(behemothLeg, -8f, 4.5f, -6f, 1f, 1f, 1f, true);
+        creature.add(behemothLeg, 8f, 4.5f, -6f, 1f, 1f, 1f, true);
+        creature.add(behemothLeg, -8f, 4.5f, 6f, 1f, 1f, 1f, true);
+        creature.add(behemothLeg, 8f, 4.5f, 6f, 1f, 1f, 1f, true);
         return creature;
     }
 
-    private Creature createSkyRay(float x, float z, float phase, int index) {
+    private Creature createDirefang(float x, float z, float phase) {
+        Creature creature = new Creature(LAND, x, z, phase, 12f, 0.34f);
+        creature.add(direfangBody, 0f, 7f, 0f, 1f, 1f, 1f, false);
+        creature.add(direfangBody, -10f, 7.5f, 0f, 0.62f, 0.62f, 0.62f, false);
+        creature.add(direfangHead, 12f, 9f, 0f, 1f, 1f, 1f, false);
+        creature.add(direfangHead, 17f, 7.5f, 0f, 0.65f, 0.55f, 0.72f, false);
+        creature.add(direfangFang, 18f, 4.5f, -2.5f, 1f, 1f, 1f, false);
+        creature.add(direfangFang, 18f, 4.5f, 2.5f, 1f, 1f, 1f, false);
+        creature.add(direfangLeg, -7f, 3f, -4f, 1f, 1f, 1f, true);
+        creature.add(direfangLeg, 7f, 3f, -4f, 1f, 1f, 1f, true);
+        creature.add(direfangLeg, -7f, 3f, 4f, 1f, 1f, 1f, true);
+        creature.add(direfangLeg, 7f, 3f, 4f, 1f, 1f, 1f, true);
+        return creature;
+    }
+
+    private Creature createAirCreature(float x, float z, float phase, int index) {
+        return index == 0 ? createWyvern(x, z, phase, index) : createSkyWraith(x, z, phase, index);
+    }
+
+    private Creature createWyvern(float x, float z, float phase, int index) {
         Creature creature = new Creature(AIR, x, z, phase, 78f + index * 12f, 0.50f);
-        creature.add(airBody, 0f, 0f, 0f, 1f, 1f, 1f, false);
-        creature.add(airWing, 0f, 0f, -10f, 1f, 1f, 1f, false);
-        creature.add(airWing, 0f, 0f, 10f, 1f, 1f, 1f, false);
-        creature.add(airEye, 6.2f, 0.7f, -2.1f, 1f, 1f, 1f, false);
-        creature.add(airEye, 6.2f, 0.7f, 2.1f, 1f, 1f, 1f, false);
-        creature.add(airCrest, -1f, 5f, 0f, 1f, 1f, 1f, false);
-        creature.add(airCrest, -6f, 3.5f, 0f, 0.7f, 0.7f, 0.7f, false);
+        creature.add(wyvernBody, 0f, 0f, 0f, 1f, 1f, 1f, false);
+        creature.add(wyvernNeck, 13f, 4f, 0f, 1f, 1f, 1f, false);
+        creature.add(wyvernHead, 23f, 6f, 0f, 1f, 1f, 1f, false);
+        creature.add(wyvernHead, 30f, 4f, 0f, 0.55f, 0.52f, 0.65f, false);
+        creature.add(wyvernWing, -2f, 3f, -18f, 1f, 1f, 1f, false);
+        creature.add(wyvernMembrane, -8f, 1f, -35f, 1f, 1f, 1f, false);
+        creature.add(wyvernWing, -2f, 3f, 18f, 1f, 1f, 1f, false);
+        creature.add(wyvernMembrane, -8f, 1f, 35f, 1f, 1f, 1f, false);
+        creature.add(wyvernLeg, -7f, -7f, -6f, 1f, 1f, 1f, false);
+        creature.add(wyvernLeg, -7f, -7f, 6f, 1f, 1f, 1f, false);
+        creature.add(wyvernHorn, 22f, 13f, -3f, 0.8f, 1f, 0.8f, false);
+        creature.add(wyvernHorn, 22f, 13f, 3f, 0.8f, 1f, 0.8f, false);
+        creature.add(wyvernHorn, 7f, 8f, 0f, 0.7f, 0.7f, 0.7f, false);
+        creature.add(wyvernNeck, -14f, 0f, 0f, 1f, 0.75f, 0.75f, false);
+        creature.add(wyvernNeck, -25f, -1f, 0f, 0.82f, 0.55f, 0.55f, false);
+        creature.add(wyvernNeck, -35f, -2f, 0f, 0.58f, 0.38f, 0.38f, false);
         return creature;
     }
 
-    private Creature createReefBeast(float x, float z, float phase) {
+    private Creature createSkyWraith(float x, float z, float phase, int index) {
+        Creature creature = new Creature(AIR, x, z, phase, 78f + index * 12f, 0.50f);
+        creature.add(wraithCore, 5f, 2f, 0f, 1f, 1f, 1f, false);
+        creature.add(wraithShroud, -2f, -5f, 0f, 1f, 1f, 1f, false);
+        creature.add(wraithShroud, -10f, -8f, -5f, 0.55f, 0.9f, 0.55f, false);
+        creature.add(wraithShroud, -10f, -8f, 5f, 0.55f, 0.9f, 0.55f, false);
+        creature.add(wraithEye, 12f, 4f, -2.8f, 1f, 1f, 1f, false);
+        creature.add(wraithEye, 12f, 4f, 2.8f, 1f, 1f, 1f, false);
+        return creature;
+    }
+
+    private Creature createWaterCreature(float x, float z, float phase, int index) {
+        return index == 0 ? createAbyssalGiantSquid(x, z, phase) : createMarshCrawler(x, z, phase);
+    }
+
+    private Creature createAbyssalGiantSquid(float x, float z, float phase) {
         Creature creature = new Creature(WATER, x, z, phase, 15f, 0.38f);
-        creature.add(waterBody, 0f, 0f, 0f, 1f, 1f, 1f, false);
-        creature.add(waterFin, 0f, 5.3f, 0f, 1f, 1f, 1f, false);
-        creature.add(waterFin, -5f, 4f, 0f, 0.72f, 0.72f, 0.72f, false);
-        creature.add(waterEye, 7f, 2.5f, -2.7f, 1f, 1f, 1f, false);
-        creature.add(waterEye, 7f, 2.5f, 2.7f, 1f, 1f, 1f, false);
-        creature.add(waterFin, -8f, 0f, -4f, 0.65f, 0.65f, 0.65f, false);
-        creature.add(waterFin, -8f, 0f, 4f, 0.65f, 0.65f, 0.65f, false);
+        creature.add(squidMantle, -8f, 2f, 0f, 1f, 1f, 1f, false);
+        creature.add(squidMantle, -23f, 3f, 0f, 0.68f, 0.72f, 0.72f, false);
+        creature.add(squidHead, 10f, 0f, 0f, 1f, 1f, 1f, false);
+        creature.add(squidEye, 17f, 4f, -7f, 1f, 1f, 1f, false);
+        creature.add(squidEye, 17f, 4f, 7f, 1f, 1f, 1f, false);
+        creature.add(squidTentacle, 34f, -2f, -10f, 1f, 1f, 1f, false);
+        creature.add(squidTentacle, 34f, -2f, 10f, 1f, 1f, 1f, false);
+        creature.add(squidArm, 25f, -4f, -7f, 1f, 1f, 1f, false);
+        creature.add(squidArm, 25f, -5f, -3f, 1f, 1f, 1f, false);
+        creature.add(squidArm, 25f, -5f, 3f, 1f, 1f, 1f, false);
+        creature.add(squidArm, 25f, -4f, 7f, 1f, 1f, 1f, false);
+        creature.add(squidArm, 21f, -7f, -11f, 0.85f, 0.85f, 0.85f, false);
+        creature.add(squidArm, 21f, -7f, 11f, 0.85f, 0.85f, 0.85f, false);
+        return creature;
+    }
+
+    private Creature createMarshCrawler(float x, float z, float phase) {
+        Creature creature = new Creature(WATER, x, z, phase, 15f, 0.38f);
+        creature.add(crawlerBody, 0f, 0f, 0f, 1f, 1f, 1f, false);
+        creature.add(crawlerHead, 12f, 1f, 0f, 1f, 1f, 1f, false);
+        creature.add(crawlerEye, 16f, 5f, -4f, 1f, 1f, 1f, false);
+        creature.add(crawlerEye, 16f, 5f, 4f, 1f, 1f, 1f, false);
+        creature.add(crawlerLeg, -5f, -2f, -10f, 1f, 1f, 1f, false);
+        creature.add(crawlerLeg, 7f, -2f, -10f, 1f, 1f, 1f, false);
+        creature.add(crawlerLeg, -5f, -2f, 10f, 1f, 1f, 1f, false);
+        creature.add(crawlerLeg, 7f, -2f, 10f, 1f, 1f, 1f, false);
         return creature;
     }
 
@@ -271,6 +325,11 @@ final class LocalCreatures {
         float limit = WorldCoordinates.HALF_TILE_SIZE - TILE_MARGIN;
         return Math.abs(WorldCoordinates.localCoordinate(x, insideTileX)) <= limit
                 && Math.abs(WorldCoordinates.localCoordinate(z, insideTileZ)) <= limit;
+    }
+
+    private Model model(Model model) {
+        models.add(model);
+        return model;
     }
 
     private static Material material(float red, float green, float blue) {
