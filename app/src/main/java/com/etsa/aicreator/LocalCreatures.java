@@ -94,7 +94,7 @@ final class LocalCreatures {
             TilePopulation population = populations.get(populationIndex);
             for (int creatureIndex = 0; creatureIndex < population.creatures.size();
                  creatureIndex++) {
-                population.creatures.get(creatureIndex).update(elapsedTime);
+                population.creatures.get(creatureIndex).update(elapsedTime, deltaSeconds);
             }
         }
     }
@@ -238,7 +238,7 @@ final class LocalCreatures {
     }
 
     private Creature createSkyRay(float x, float z, float phase, int index) {
-        Creature creature = new Creature(AIR, x, z, phase, 42f + index * 8f, 0.22f);
+        Creature creature = new Creature(AIR, x, z, phase, 78f + index * 12f, 0.50f);
         creature.add(airBody, 0f, 0f, 0f, 1f, 1f, 1f, false);
         creature.add(airWing, 0f, 0f, -10f, 1f, 1f, 1f, false);
         creature.add(airWing, 0f, 0f, 10f, 1f, 1f, 1f, false);
@@ -250,7 +250,7 @@ final class LocalCreatures {
     }
 
     private Creature createReefBeast(float x, float z, float phase) {
-        Creature creature = new Creature(WATER, x, z, phase, 15f, 0.28f);
+        Creature creature = new Creature(WATER, x, z, phase, 15f, 0.38f);
         creature.add(waterBody, 0f, 0f, 0f, 1f, 1f, 1f, false);
         creature.add(waterFin, 0f, 5.3f, 0f, 1f, 1f, 1f, false);
         creature.add(waterFin, -5f, 4f, 0f, 0.72f, 0.72f, 0.72f, false);
@@ -300,6 +300,8 @@ final class LocalCreatures {
         final float movementRadius;
         final float speed;
         final ArrayList<CreaturePart> parts = new ArrayList<>(12);
+        float headingDegrees;
+        boolean headingInitialized;
 
         Creature(int habitat, float originX, float originZ, float phase,
                  float movementRadius, float speed) {
@@ -317,14 +319,23 @@ final class LocalCreatures {
                     scaleX, scaleY, scaleZ, grounded));
         }
 
-        void update(float time) {
+        void update(float time, float deltaSeconds) {
             float motion = time * speed + phase;
             float x = originX + MathUtils.cos(motion) * movementRadius;
             float z = originZ + MathUtils.sin(motion * 0.83f) * movementRadius;
             float velocityX = -MathUtils.sin(motion) * movementRadius * speed;
             float velocityZ = MathUtils.cos(motion * 0.83f)
                     * movementRadius * speed * 0.83f;
-            float yaw = MathUtils.atan2(velocityX, velocityZ) * MathUtils.radiansToDegrees;
+            float desiredHeading = MathUtils.atan2(velocityX, velocityZ)
+                    * MathUtils.radiansToDegrees;
+            if (!headingInitialized) {
+                headingDegrees = desiredHeading;
+                headingInitialized = true;
+            } else {
+                float turnResponse = habitat == AIR ? 1.6f : habitat == WATER ? 2.4f : 3.2f;
+                headingDegrees = MathUtils.lerpAngleDeg(headingDegrees, desiredHeading,
+                        MathUtils.clamp(deltaSeconds * turnResponse, 0f, 1f));
+            }
             float baseY;
             if (habitat == AIR) {
                 float surface = Math.max(WorldGenerator.WATER_LEVEL,
@@ -338,8 +349,8 @@ final class LocalCreatures {
                         + MathUtils.sin(time * 2f + phase) * 0.3f;
             }
 
-            float sinYaw = MathUtils.sinDeg(yaw);
-            float cosYaw = MathUtils.cosDeg(yaw);
+            float sinYaw = MathUtils.sinDeg(headingDegrees);
+            float cosYaw = MathUtils.cosDeg(headingDegrees);
             for (int index = 0; index < parts.size(); index++) {
                 CreaturePart part = parts.get(index);
                 float partX = x + sinYaw * part.forward + cosYaw * part.side;
@@ -356,7 +367,7 @@ final class LocalCreatures {
                     partY += MathUtils.sin(time * 2f + phase + part.side) * 0.7f;
                 }
                 part.instance.transform.setToTranslation(partX, partY, partZ)
-                        .rotate(Vector3.Y, yaw)
+                        .rotate(Vector3.Y, headingDegrees)
                         .scale(part.scaleX, part.scaleY, part.scaleZ);
             }
         }
